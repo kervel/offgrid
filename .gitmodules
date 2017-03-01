@@ -1,0 +1,9 @@
+[submodule "sleepypi/libraries/SleepyPi2"]
+	path = sleepypi/libraries/SleepyPi2
+	url = git@github.com:SpellFoundry/SleepyPi2.git
+[submodule "sleepypi/libraries/PCF8523"]
+	path = sleepypi/libraries/PCF8523
+	url = git@github.com:SpellFoundry/PCF8523.git
+[submodule "sleepypi/libraries/Time"]
+	path = sleepypi/libraries/Time
+	url = git@github.com:PaulStoffregen/Time.git
