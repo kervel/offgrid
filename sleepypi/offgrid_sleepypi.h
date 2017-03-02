@@ -20,6 +20,7 @@ void wait_alarm();
 void execute_command();
 
 struct SleepyPiRegisterMap {
+	unsigned char fixedChar;
 	float inputVoltage;
 	float rpiCurrent;
 	int wakeupAlarmHour;

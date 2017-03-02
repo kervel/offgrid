@@ -18,13 +18,20 @@ byte receivedCommands[MAX_SENT_BYTES];
 //The setup function is called once at startup of the sketch
 void setup()
 {
-	Wire.begin(SLAVE_ADDRESS);
-	Wire.onRequest(request_event);
-	Wire.onReceive(receive_event);
 #ifdef DEBUG
 	Serial.begin(9600);
 	Serial.println("start");
 #endif
+	regmap.vars.fixedChar = 58;
+	if (!SleepyPi.rtcInit(false)) {
+		Serial.println("no RTC found");
+	}
+	/* rtcInit sets up RTC in master mode, but we want to be a slave most of the time
+	 * normally, the wire library switches to master mode when needed
+	 */
+	Wire.begin(SLAVE_ADDRESS);
+	Wire.onRequest(request_event);
+	Wire.onReceive(receive_event);
 }
 
 // The loop function is called in an endless loop
@@ -99,7 +106,6 @@ void execute_command() {
 	break;
 	case CMD_POWEROFF_RPI : SleepyPi.startPiShutdown();
 	break;
-
 	}
 
 }
