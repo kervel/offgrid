@@ -11,7 +11,7 @@
 
 union SleepyPiRegisters regmap;
 bool newDataAvailable = 0;
-
+bool written = 0;
 byte receivedCommands[MAX_SENT_BYTES];
 
 
@@ -42,11 +42,24 @@ void loop()
 	if (regmap.vars.command != CMD_NOTHING) {
 		execute_command();
 	}
+        if (written) {
+            Serial.print("loop:");
+            Serial.print(regmap.vars.inputVoltage);
+            Serial.print(" - ");
+            Serial.print(regmap.vars.rpiCurrent);
+            Serial.print(" - ");
+            Serial.print(regmap.vars.wakeupSeconds);
+            Serial.print(" - ");
+            Serial.println(regmap.vars.command);
+            
+        }
+        written = 0;
 	newDataAvailable = 1;
 }
 
 void request_event()
 {
+        written = 1;
 	Wire.write(regmap.regMapTemp + receivedCommands[0],REGMAP_SIZE);
 }
 

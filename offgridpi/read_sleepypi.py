@@ -1,6 +1,6 @@
-from smbus2 import SMBus
-import struct
 from __future__ import print_function
+from smbus import SMBus
+import struct
 
 bus = SMBus(1)
 address = 0x36
@@ -21,7 +21,7 @@ def get_rpi_current():
     return i2c_get_float32le(bus,address,5)
 
 def detect_sleepy():
-    fixed = bus.read_byte_data(bus,address,0)
+    fixed = bus.read_byte_data(address,0)
     if fixed == 58:
         return True
     print("fixed is {f}".format(f=fixed) )
