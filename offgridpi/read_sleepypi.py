@@ -30,4 +30,4 @@ def detect_sleepy():
 if detect_sleepy():
     volt = get_supply_voltage()
     amps = get_rpi_current()
-    print("i get got {v} volts of supply and am using {i} amps".format(v=volt, i=amps))
+    print("i get got {v} volts of supply and am using {i} milli amps".format(v=volt, i=amps))
