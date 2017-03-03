@@ -48,7 +48,7 @@ void loop()
             Serial.print(" - ");
             Serial.print(regmap.vars.rpiCurrent);
             Serial.print(" - ");
-            Serial.print(regmap.vars.wakeupSeconds);
+            Serial.print(regmap.vars.wakeupAlarmMinute);
             Serial.print(" - ");
             Serial.println(regmap.vars.command);
             
@@ -60,7 +60,7 @@ void loop()
 void request_event()
 {
         written = 1;
-	Wire.write(regmap.regMapTemp + receivedCommands[0],REGMAP_SIZE);
+	Wire.write(regmap.regMapTemp + receivedCommands[0],REGMAP_SIZE - receivedCommands[0]);
 }
 
 void receive_event(int bytesReceived) {
