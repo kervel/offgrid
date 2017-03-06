@@ -23,6 +23,8 @@ struct SleepyPiRegisterMap {
 	unsigned char fixedChar;
 	float inputVoltage;
 	float rpiCurrent;
+	float inputVoltageStopPi;
+	float inputVoltageResume;
 	int wakeupAlarmHour;
 	int wakeupAlarmMinute;
 	int wakeupSeconds;

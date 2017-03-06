@@ -3,6 +3,7 @@
 
 #include <Wire.h>
 #include <SleepyPi2.h>
+#include <PiStatusTracker.h>
 
 #define DEBUG
 
@@ -37,6 +38,7 @@ void setup()
 // The loop function is called in an endless loop
 void loop()
 {
+	piStatusTracker.pollForChanges(true);
 	regmap.vars.inputVoltage = SleepyPi.supplyVoltage();
 	regmap.vars.rpiCurrent = SleepyPi.rpiCurrent();
 	if (regmap.vars.command != CMD_NOTHING) {
