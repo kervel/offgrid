@@ -13,6 +13,7 @@
 union SleepyPiRegisters regmap;
 bool newDataAvailable = 0;
 bool written = 0;
+bool isPowerSleep = false;
 byte receivedCommands[MAX_SENT_BYTES];
 
 
@@ -35,6 +36,18 @@ void setup()
 	Wire.onReceive(receive_event);
 }
 
+
+void dumpStatusSerial() {
+    Serial.print("loop:");
+    Serial.print(regmap.vars.inputVoltage);
+    Serial.print(" - ");
+    Serial.print(regmap.vars.rpiCurrent);
+    Serial.print(" - ");
+    Serial.print(regmap.vars.wakeupAlarmMinute);
+    Serial.print(" - ");
+    Serial.println(regmap.vars.command);
+}
+
 // The loop function is called in an endless loop
 void loop()
 {
@@ -42,30 +55,35 @@ void loop()
 	regmap.vars.inputVoltage = SleepyPi.supplyVoltage();
 	regmap.vars.rpiCurrent = SleepyPi.rpiCurrent();
 	if (regmap.vars.inputVoltage > 0 && regmap.vars.inputVoltage < regmap.vars.inputVoltageStopPi) {
+		piStatusTracker.onPowerOff(0);
 		piStatusTracker.startShutdownHandshake();
+		isPowerSleep = true;
+	}
+	if (isPowerSleep && piStatusTracker.getCurrentStatus() == eOFF && regmap.vars.inputVoltage >= regmap.vars.inputVoltageResume) {
+		SleepyPi.enablePiPower(true);
+		isPowerSleep = false;
+	}
+
+	if (piStatusTracker.isStableStatus()) {
+		SleepyPi.powerDown(SLEEP_8S, ADC_OFF, BOD_OFF);
+	} else {
+		delay(500);
 	}
 
 	if (regmap.vars.command != CMD_NOTHING) {
 		execute_command();
 	}
-        if (written) {
-            Serial.print("loop:");
-            Serial.print(regmap.vars.inputVoltage);
-            Serial.print(" - ");
-            Serial.print(regmap.vars.rpiCurrent);
-            Serial.print(" - ");
-            Serial.print(regmap.vars.wakeupAlarmMinute);
-            Serial.print(" - ");
-            Serial.println(regmap.vars.command);
-            
-        }
-        written = 0;
+	if (written) {
+		dumpStatusSerial();
+
+	}
+	written = 0;
 	newDataAvailable = 1;
 }
 
 void request_event()
 {
-        written = 1;
+	written = 1;
 	Wire.write(regmap.regMapTemp + receivedCommands[0],REGMAP_SIZE - receivedCommands[0]);
 }
 
@@ -91,13 +109,6 @@ void receive_event(int bytesReceived) {
 		receivedCommands[0] = 0x00;
 		return;
 	}
-#ifdef DEBUG
-	Serial.print("Got ");
-	Serial.print(bytesReceived);
-	Serial.print(" bytes ");
-	Serial.print(receivedCommands[0]);
-	Serial.println("");
-#endif
 	for (int i=1; i<bytesReceived; i++) {
 		byte dataByte = receivedCommands[i];
 		int offset = receivedCommands[0] + (i-1);
