@@ -8,14 +8,22 @@
 #include "PiStatusTracker.h"
 #include <SleepyPi2.h>
 
+#define CMD_PI_TO_SHDWN_PIN	17
+
 
 PiStatusTracker::PiStatusTracker() {
 	timeSinceLastChange = millis();
+	powerOffCallback = 0;
+	powerOnAfterPowerOff = false;
 	if (SleepyPi.checkPiStatus(false)) {
 		theStatus = eRUNNING;
 	} else {
 		theStatus = eOFF; // not right
 	}
+}
+
+void PiStatusTracker::onPowerOff(void(*userfunc)(void)) {
+	powerOffCallback = userfunc;
 }
 
 void PiStatusTracker::changeStatus(enum RaspiStatus newStatus) {
@@ -27,18 +35,29 @@ void PiStatusTracker::changeStatus(enum RaspiStatus newStatus) {
 }
 
 void PiStatusTracker::startShutdownHandshake() {
-	if (theStatus == eRUNNING) {
+	if (theStatus == eRUNNING || theStatus == eBOOTING) {
 		changeStatus(eHALTING);
-		SleepyPi.startPiShutdown();
+		digitalWrite(CMD_PI_TO_SHDWN_PIN,HIGH);
 	}
+
 }
 
-void PiStatusTracker::pollForChanges(bool cutPowerOnHalt) {
+void PiStatusTracker::startPowercycleHandshake() {
+	powerOnAfterPowerOff = true;
+	startShutdownHandshake();
+}
+
+void PiStatusTracker::pollForChanges(bool autoManagePower) {
 	bool stat = SleepyPi.checkPiStatus(false);
 	bool pwr = SleepyPi.power_on;
 
 	if ((theStatus != eOFF) && !pwr) {
 		changeStatus(eOFF);
+		digitalWrite(CMD_PI_TO_SHDWN_PIN,LOW);
+		if (powerOffCallback != 0) {
+			powerOffCallback();
+			powerOffCallback = 0;
+		}
 	} else {
 		switch (theStatus) {
 			case eOFF:
@@ -47,6 +66,13 @@ void PiStatusTracker::pollForChanges(bool cutPowerOnHalt) {
 				}
 				if (pwr && stat) {
 					changeStatus(eRUNNING);
+				}
+				if (!pwr && !stat) {
+					if (powerOnAfterPowerOff) {
+						SleepyPi.enablePiPower(true);
+						powerOnAfterPowerOff = false;
+						changeStatus(eBOOTING);
+					}
 				}
 				break;
 			case eRUNNING:
@@ -71,7 +97,7 @@ void PiStatusTracker::pollForChanges(bool cutPowerOnHalt) {
 				if (!stat) {
 					changeStatus(eHALTED);
 				}
-				if (cutPowerOnHalt) {
+				if (autoManagePower) {
 					SleepyPi.enablePiPower(false);
 				}
 				break;
@@ -79,7 +105,7 @@ void PiStatusTracker::pollForChanges(bool cutPowerOnHalt) {
 				if (stat) {
 					changeStatus(eRUNNING);
 				}
-				if (cutPowerOnHalt) {
+				if (autoManagePower) {
 					SleepyPi.enablePiPower(false);
 				}
 				break;
@@ -87,8 +113,19 @@ void PiStatusTracker::pollForChanges(bool cutPowerOnHalt) {
 	}
 }
 
+enum RaspiStatus PiStatusTracker::getCurrentStatus() {
+	return theStatus;
+}
+
+
+bool PiStatusTracker::isStableStatus() {
+	if (powerOnAfterPowerOff && (theStatus == eOFF)) {
+		return false;
+	}
+	return ((theStatus == eRUNNING) || (theStatus == eOFF));
+}
+
 PiStatusTracker::~PiStatusTracker() {
-	// TODO Auto-generated destructor stub
 }
 
 PiStatusTracker piStatusTracker;

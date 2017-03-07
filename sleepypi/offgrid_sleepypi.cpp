@@ -41,6 +41,10 @@ void loop()
 	piStatusTracker.pollForChanges(true);
 	regmap.vars.inputVoltage = SleepyPi.supplyVoltage();
 	regmap.vars.rpiCurrent = SleepyPi.rpiCurrent();
+	if (regmap.vars.inputVoltage > 0 && regmap.vars.inputVoltage < regmap.vars.inputVoltageStopPi) {
+		piStatusTracker.startShutdownHandshake();
+	}
+
 	if (regmap.vars.command != CMD_NOTHING) {
 		execute_command();
 	}
@@ -113,17 +117,24 @@ void execute_command() {
 	unsigned char cmd = regmap.vars.command;
 	regmap.vars.command = CMD_NOTHING;
 	switch (cmd) {
-	case CMD_WAIT_ALARM : wait_alarm();
-	break;
-	case CMD_POWEROFF_EXT : SleepyPi.enableExtPower(false);
-	break;
-	case CMD_POWERON_EXT : SleepyPi.enableExtPower(true);
-	break;
-	case CMD_POWEROFF_RPI : SleepyPi.startPiShutdown();
-	break;
+	case CMD_WAIT_ALARM :
+		piStatusTracker.onPowerOff(wait_alarm);
+		piStatusTracker.startShutdownHandshake();
+		wait_alarm();
+		break;
+	case CMD_POWEROFF_EXT :
+		SleepyPi.enableExtPower(false);
+		break;
+	case CMD_POWERON_EXT :
+		SleepyPi.enableExtPower(true);
+		break;
+	case CMD_POWEROFF_RPI :
+		SleepyPi.startPiShutdown();
+		break;
 	}
 
 }
+
 
 void wait_alarm() {
 #ifdef DEBUG
@@ -139,6 +150,7 @@ void wait_alarm() {
 #endif
 	detachInterrupt(0);
 	SleepyPi.ackAlarm();
+	SleepyPi.enablePiPower(true);
 }
 
 

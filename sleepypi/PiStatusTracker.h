@@ -22,17 +22,21 @@ public:
 	PiStatusTracker();
 
 	enum RaspiStatus getCurrentStatus();
-	void pollForChanges(bool cutPowerOnHalt);
+	void pollForChanges(bool autoManagePower);
 	void startShutdownHandshake();
+	void startPowercycleHandshake();
+	bool isStableStatus();
 	void changeStatus(enum RaspiStatus newStatus);
+	void onPowerOff(void (*callback) (void));
 
-
-	virtual ~PiStatusTracker();
+	~PiStatusTracker();
 
 
 private:
 	enum RaspiStatus theStatus;
 	long timeSinceLastChange;
+	bool powerOnAfterPowerOff;
+	void (*powerOffCallback) (void);
 };
 
 extern PiStatusTracker piStatusTracker;
