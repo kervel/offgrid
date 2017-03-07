@@ -40,11 +40,9 @@ union SleepyPiRegisters {
 
 #define CMD_NOTHING 0
 #define CMD_WAIT_ALARM 1
-#define CMD_WAIT_DELAY 2
-#define CMD_POWEROFF_RPI 3
+#define CMD_WAIT_TIMER 2
 #define CMD_POWEROFF_EXT 4
 #define CMD_POWERON_EXT 5
-#define CMD_WATCHDOG_PING 6
 
 //Do not add code below this line
 #endif /* _offgrid_sleepypi_H_ */

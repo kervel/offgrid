@@ -7,6 +7,14 @@
 
 #define DEBUG
 
+#ifdef DEBUG
+ #define debugpln(x)  Serial.println (x)
+ #define debugp(x)  Serial.print (x)
+#else
+ #define debugpln(x)
+ #define debugp(x)
+#endif
+
 #define SLAVE_ADDRESS 0x36
 #define MAX_SENT_BYTES 5
 
@@ -22,7 +30,7 @@ void setup()
 {
 #ifdef DEBUG
 	Serial.begin(9600);
-	Serial.println("start");
+	debugpln("start");
 #endif
 	regmap.vars.fixedChar = 58;
 	if (!SleepyPi.rtcInit(false)) {
@@ -38,14 +46,14 @@ void setup()
 
 
 void dumpStatusSerial() {
-    Serial.print("loop:");
-    Serial.print(regmap.vars.inputVoltage);
-    Serial.print(" - ");
-    Serial.print(regmap.vars.rpiCurrent);
-    Serial.print(" - ");
-    Serial.print(regmap.vars.wakeupAlarmMinute);
-    Serial.print(" - ");
-    Serial.println(regmap.vars.command);
+    debugp("loop:");
+    debugp(regmap.vars.inputVoltage);
+    debugp(" - ");
+    debugp(regmap.vars.rpiCurrent);
+    debugp(" - ");
+    debugp(regmap.vars.wakeupAlarmMinute);
+    debugp(" - ");
+    debugp(regmap.vars.command);
 }
 
 // The loop function is called in an endless loop
@@ -67,6 +75,7 @@ void loop()
 	if (piStatusTracker.isStableStatus()) {
 		SleepyPi.powerDown(SLEEP_8S, ADC_OFF, BOD_OFF);
 	} else {
+		// we cannot power down if we don't have a stable status because then we need millis()
 		delay(500);
 	}
 
@@ -131,7 +140,10 @@ void execute_command() {
 	case CMD_WAIT_ALARM :
 		piStatusTracker.onPowerOff(wait_alarm);
 		piStatusTracker.startShutdownHandshake();
-		wait_alarm();
+		break;
+	case CMD_WAIT_TIMER:
+		piStatusTracker.onPowerOff(wait_timer);
+		piStatusTracker.startShutdownHandshake();
 		break;
 	case CMD_POWEROFF_EXT :
 		SleepyPi.enableExtPower(false);
@@ -139,28 +151,44 @@ void execute_command() {
 	case CMD_POWERON_EXT :
 		SleepyPi.enableExtPower(true);
 		break;
-	case CMD_POWEROFF_RPI :
-		SleepyPi.startPiShutdown();
-		break;
 	}
 
 }
 
+void wait_timer() {
+	debugpln("waiting for timer...");
+    attachInterrupt(0, alarm_isr, FALLING);    // Alarm pin
+    eTIMER_TIMEBASE tb = eTB_SECOND;
+    uint8_t tv = 0;
+    if (regmap.vars.wakeupSeconds < 250) {
+    	tb = eTB_SECOND;
+    	tv = regmap.vars.wakeupSeconds;
+    } else if (regmap.vars.wakeupSeconds < 15300) {
+    	tb = eTB_MINUTE;
+    	tv = regmap.vars.wakeupSeconds / 60;
+    } else {
+    	tb = eTB_HOUR;
+    	tv = regmap.vars.wakeupSeconds / 3600;
+    }
+    SleepyPi.setTimer1(tb, tv);
+    delay(500);
+    SleepyPi.powerDown(SLEEP_FOREVER, ADC_OFF, BOD_OFF);
+    detachInterrupt(0);
+    SleepyPi.ackTimer1();
+	debugpln("got timer interrupt...");
+    SleepyPi.enablePiPower(true);
+}
 
 void wait_alarm() {
-#ifdef DEBUG
-	Serial.println("waiting for alarm...");
-#endif
+	debugpln("waiting for alarm...");
 	attachInterrupt(0, alarm_isr, FALLING);		// Alarm pin
 	SleepyPi.enableWakeupAlarm(true);
 	SleepyPi.setAlarm(regmap.vars.wakeupAlarmHour, regmap.vars.wakeupAlarmMinute);
 	delay(500);
 	SleepyPi.powerDown(SLEEP_FOREVER, ADC_OFF, BOD_OFF);
-#ifdef DEBUG
-	Serial.println("got alarm...");
-#endif
 	detachInterrupt(0);
 	SleepyPi.ackAlarm();
+	debugpln("got alarm...");
 	SleepyPi.enablePiPower(true);
 }
 
