@@ -15,11 +15,7 @@ PiStatusTracker::PiStatusTracker() {
 	timeSinceLastChange = millis();
 	powerOffCallback = 0;
 	powerOnAfterPowerOff = false;
-	if (SleepyPi.checkPiStatus(false)) {
-		theStatus = eRUNNING;
-	} else {
-		theStatus = eOFF; // not right
-	}
+	theStatus = eUNKNOWN;
 }
 
 void PiStatusTracker::onPowerOff(void(*userfunc)(void)) {
@@ -47,6 +43,10 @@ void PiStatusTracker::startPowercycleHandshake() {
 	startShutdownHandshake();
 }
 
+bool PiStatusTracker::hasPowerOffCallback() {
+	return powerOffCallback != 0;
+}
+
 void PiStatusTracker::pollForChanges(bool autoManagePower) {
 	bool stat = SleepyPi.checkPiStatus(false);
 	bool pwr = SleepyPi.power_on;
@@ -57,9 +57,24 @@ void PiStatusTracker::pollForChanges(bool autoManagePower) {
 		if (powerOffCallback != 0) {
 			powerOffCallback();
 			powerOffCallback = 0;
+			// the power off callback might have changed the status --> we need to poll the status again
+			theStatus = eUNKNOWN;
 		}
 	} else {
+		long curTime = millis();
+
 		switch (theStatus) {
+			case eUNKNOWN:
+				if (stat) {
+					theStatus = eRUNNING;
+				} else {
+					if (pwr) {
+						theStatus = eBOOTING;
+					} else {
+						theStatus = eOFF; // not right
+					}
+				}
+				break;
 			case eOFF:
 				if (pwr && !stat) {
 					changeStatus(eBOOTING);
@@ -83,10 +98,16 @@ void PiStatusTracker::pollForChanges(bool autoManagePower) {
 			case eBOOTING:
 				if (stat) {
 					changeStatus(eRUNNING);
+				} else if (curTime - timeSinceLastChange > kFAILSAFETIME_MS) {
+					changeStatus(eBOOTING_TOOLONG);
+				}
+				break;
+			case eBOOTING_TOOLONG:
+				if (stat) {
+					changeStatus(eRUNNING);
 				}
 				break;
 			case eHALTING:
-				long curTime = millis();
 				if (!stat) {
 					changeStatus(eHALTED);
 				} else if (curTime - timeSinceLastChange > kFAILSAFETIME_MS) {

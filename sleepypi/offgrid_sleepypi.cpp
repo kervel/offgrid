@@ -3,7 +3,7 @@
 
 #include <Wire.h>
 #include <SleepyPi2.h>
-#include <PiStatusTracker.h>
+#include "PiStatusTracker.h"
 
 #define DEBUG
 
@@ -59,24 +59,37 @@ void dumpStatusSerial() {
 // The loop function is called in an endless loop
 void loop()
 {
+#ifdef DEBUG
+	digitalWrite(LED_BUILTIN,HIGH);
+	delay(50);
+	digitalWrite(LED_BUILTIN,LOW);
+#endif
+
 	piStatusTracker.pollForChanges(true);
 	regmap.vars.inputVoltage = SleepyPi.supplyVoltage();
 	regmap.vars.rpiCurrent = SleepyPi.rpiCurrent();
 	if (regmap.vars.inputVoltage > 0 && regmap.vars.inputVoltage < regmap.vars.inputVoltageStopPi) {
+		// voltage dropped too low --> initiate shutdown sequence
 		piStatusTracker.onPowerOff(0);
 		piStatusTracker.startShutdownHandshake();
 		isPowerSleep = true;
 	}
 	if (isPowerSleep && piStatusTracker.getCurrentStatus() == eOFF && regmap.vars.inputVoltage >= regmap.vars.inputVoltageResume) {
+		// voltage high enough --> start the rpi back up
 		SleepyPi.enablePiPower(true);
 		isPowerSleep = false;
+	}
+
+	if (!isPowerSleep &&  !piStatusTracker.hasPowerOffCallback() && piStatusTracker.getCurrentStatus() == eOFF) {
+		// spontaneous shutdown of rpi, wait 1 minute and power back up!
+		wait_timer1min();
 	}
 
 	if (piStatusTracker.isStableStatus()) {
 		SleepyPi.powerDown(SLEEP_8S, ADC_OFF, BOD_OFF);
 	} else {
 		// we cannot power down if we don't have a stable status because then we need millis()
-		delay(500);
+		delay(700);
 	}
 
 	if (regmap.vars.command != CMD_NOTHING) {
@@ -156,19 +169,27 @@ void execute_command() {
 }
 
 void wait_timer() {
+	wait_timer(regmap.vars.wakeupSeconds);
+}
+
+void wait_timer1min() {
+	wait_timer(60);
+}
+
+void wait_timer(int wks) {
 	debugpln("waiting for timer...");
     attachInterrupt(0, alarm_isr, FALLING);    // Alarm pin
     eTIMER_TIMEBASE tb = eTB_SECOND;
     uint8_t tv = 0;
-    if (regmap.vars.wakeupSeconds < 250) {
+    if (wks < 250) {
     	tb = eTB_SECOND;
-    	tv = regmap.vars.wakeupSeconds;
-    } else if (regmap.vars.wakeupSeconds < 15300) {
+    	tv = wks;
+    } else if (wks < 15300) {
     	tb = eTB_MINUTE;
-    	tv = regmap.vars.wakeupSeconds / 60;
+    	tv = wks / 60;
     } else {
     	tb = eTB_HOUR;
-    	tv = regmap.vars.wakeupSeconds / 3600;
+    	tv = wks / 3600;
     }
     SleepyPi.setTimer1(tb, tv);
     delay(500);

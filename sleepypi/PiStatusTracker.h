@@ -10,10 +10,12 @@
 
 enum RaspiStatus {
 	eBOOTING,
+	eBOOTING_TOOLONG,
 	eRUNNING,
 	eHALTING,
 	eHALTING_TOOLONG,
 	eHALTED,
+	eUNKNOWN,
 	eOFF
 };
 
@@ -28,6 +30,7 @@ public:
 	bool isStableStatus();
 	void changeStatus(enum RaspiStatus newStatus);
 	void onPowerOff(void (*callback) (void));
+	bool hasPowerOffCallback();
 
 	~PiStatusTracker();
 
