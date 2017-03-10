@@ -81,7 +81,7 @@ class SleepyPi():
         self.bus.write_i2c_block_data(self.address,REG_SECONDS, clist(bytearray))
 
     def sendCommand(self,cmd):
-        self.bus.write_byte_data(self,REG_COMMAND,cmd)
+        self.bus.write_byte_data(self.address,REG_COMMAND,cmd)
 
     def sleepTimer(self,seconds):
         self.set_sleep_timer_reg(seconds)
