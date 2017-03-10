@@ -17,6 +17,8 @@ pi = SleepyPi()
 if args.stats == True:
     print("I: {amps}".format(amps=pi.get_rpi_current()))
     print("V: {volts}".format(volts=pi.get_supply_voltage()))
+    print('Susp: {v}'.format(v=pi.get_minimum_run_voltage()))
+    print('Res: {v}'.format(v=pi.get_resume_voltage()))
     sys.exit(0)
 
 if args.set_suspend_voltage:

@@ -22,6 +22,9 @@ CMD_WAIT_TIMER=2
 CMD_POWEROFF_EXT=4
 CMD_POWERON_EXT=5
 
+def clist(x):
+    return [ord(z) for z in list(x)]
+
 
 class SleepyPi():
     def __init__(self):
@@ -59,23 +62,23 @@ class SleepyPi():
 
     def set_minimum_run_voltage(self,val):
         bytearray = struct.pack('<f',val)
-        self.bus.write_i2c_block_dat(self.address, REG_THRESH_SUSPEND_VOLT, bytearray)
+        self.bus.write_i2c_block_data(self.address, REG_THRESH_SUSPEND_VOLT, clist(bytearray))
 
     def set_resume_voltage(self,val):
         bytearray = struct.pack('<f',val)
-        self.bus.write_i2c_block_data(self.address, REG_THRESH_RESUME_VOLT, bytearray)
+        self.bus.write_i2c_block_data(self.address, REG_THRESH_RESUME_VOLT, clist(bytearray))
 
     def set_alarm_hour_reg(self,val):
         bytearray = struct.pack('<H',val)
-        self.bus.write_i2c_block_data(self.address,REG_ALARM_HOUR, bytearray)
+        self.bus.write_i2c_block_data(self.address,REG_ALARM_HOUR, clist(bytearray))
 
     def set_alarm_minutes_reg(self,val):
         bytearray = struct.pack('<H',val)
-        self.bus.write_i2c_block_data(self.address,REG_ALARM_MINUTE, bytearray)
+        self.bus.write_i2c_block_data(self.address,REG_ALARM_MINUTE, clist(bytearray))
 
     def set_sleep_timer_reg(self,seconds):
         bytearray = struct.pack('<H',seconds)
-        self.bus.write_i2c_block_data(self.address,REG_SECONDS, bytearray)
+        self.bus.write_i2c_block_data(self.address,REG_SECONDS, clist(bytearray))
 
     def sendCommand(self,cmd):
         self.bus.write_byte_data(self,REG_COMMAND,cmd)
