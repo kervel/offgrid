@@ -65,6 +65,7 @@ void PiStatusTracker::pollForChanges(bool autoManagePower) {
 
 		switch (theStatus) {
 			case eUNKNOWN:
+				digitalWrite(CMD_PI_TO_SHDWN_PIN,LOW);
 				if (stat) {
 					theStatus = eRUNNING;
 				} else {
@@ -88,6 +89,11 @@ void PiStatusTracker::pollForChanges(bool autoManagePower) {
 						powerOnAfterPowerOff = false;
 						changeStatus(eBOOTING);
 					}
+				}
+				if (!pwr && stat) {
+					// bypass jumper apparently set ...
+					changeStatus(eRUNNING);
+
 				}
 				break;
 			case eRUNNING:
@@ -123,6 +129,8 @@ void PiStatusTracker::pollForChanges(bool autoManagePower) {
 				}
 				break;
 			case eHALTED:
+				// prevent reboot loop when bypass jumper is set
+				digitalWrite(CMD_PI_TO_SHDWN_PIN,LOW);
 				if (stat) {
 					changeStatus(eRUNNING);
 				}

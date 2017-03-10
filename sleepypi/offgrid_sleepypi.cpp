@@ -46,8 +46,10 @@ void setup()
 	if (!SleepyPi.rtcInit(false)) {
 		Serial.println("no RTC found");
 	}
-	/* rtcInit sets up RTC in master mode, but we want to be a slave most of the time
-	 * normally, the wire library switches to master mode when needed
+	SleepyPi.enablePiPower(false);
+	/* rtcInit switches to I2C master mode for rtc setup.
+	 * however, we want to be a slave for the raspberry pi, so switch back to slave mode.
+	 * the wire library switches back to master mode when needed
 	 */
 	Wire.begin(SLAVE_ADDRESS);
 	Wire.onRequest(request_event);
@@ -83,8 +85,10 @@ void loop()
 			&& regmap.vars.inputVoltageResume > 0
 			&& regmap.vars.inputVoltage < regmap.vars.inputVoltageStopPi) {
 		// voltage dropped too low --> initiate shutdown sequence
-		piStatusTracker.onPowerOff(0);
-		piStatusTracker.startShutdownHandshake();
+		if (piStatusTracker.getCurrentStatus() != eOFF) {
+			piStatusTracker.onPowerOff(0);
+			piStatusTracker.startShutdownHandshake();
+		}
 		blinkDebug(20);
 		isPowerSleep = true;
 	}
