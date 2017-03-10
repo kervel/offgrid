@@ -14,7 +14,7 @@ REG_THRESH_RESUME_VOLT = 13
 REG_ALARM_HOUR = 17
 REG_ALARM_MINUTE = 19
 REG_SECONDS = 21
-REG_COMMAND = 23
+REG_COMMAND = 25
 
 CMD_NOTHING=0
 CMD_WAIT_ALARM=1
@@ -74,7 +74,7 @@ class SleepyPi():
         self.bus.write_i2c_block_data(self.address,REG_ALARM_MINUTE, bytearray)
 
     def set_sleep_timer_reg(self,seconds):
-        bytearray = struct.pack('<H',seconds)
+        bytearray = struct.pack('<I',seconds)
         self.bus.write_i2c_block_data(self.address,REG_SECONDS, bytearray)
 
     def sendCommand(self,cmd):

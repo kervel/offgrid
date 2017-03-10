@@ -207,7 +207,7 @@ void wait_timershort() {
 	wait_timer(20);
 }
 
-void wait_timer(int wks) {
+void wait_timer(long wks) {
 	blinkDebug(3);
 	debugpln("waiting for timer...");
     attachInterrupt(0, alarm_isr, FALLING);    // Alarm pin
