@@ -89,6 +89,7 @@ void loop()
 			piStatusTracker.onPowerOff(0);
 			piStatusTracker.startShutdownHandshake();
 		}
+		debugpln("pwrslp");
 		blinkDebug(20);
 		isPowerSleep = true;
 	}
@@ -96,6 +97,7 @@ void loop()
 			&& piStatusTracker.getCurrentStatus() == eOFF
 			&& regmap.vars.inputVoltage >= regmap.vars.inputVoltageResume) {
 		// voltage high enough --> start the rpi back up
+		debugpln("resum");
 		SleepyPi.enablePiPower(true);
 		blinkDebug(3);
 		isPowerSleep = false;
@@ -105,11 +107,16 @@ void loop()
 			&& !piStatusTracker.hasPowerOffCallback()
 			&& piStatusTracker.getCurrentStatus() == eOFF) {
 		// spontaneous shutdown of rpi, wait 1 minute and power back up!
-		wait_timer1min();
+		debugpln("spont");
+		wait_timershort();
 	}
 
 	if (piStatusTracker.isStableStatus()) {
-		SleepyPi.powerDown(SLEEP_8S, ADC_OFF, BOD_OFF);
+		if (piStatusTracker.getCurrentStatus() == eOFF) {
+			SleepyPi.powerDown(SLEEP_8S, ADC_OFF, BOD_OFF);
+		} else {
+			delay(5000);
+		}
 	} else {
 		// we cannot power down if we don't have a stable status because then we need millis()
 		delay(700);
@@ -195,9 +202,9 @@ void wait_timer() {
 	wait_timer(regmap.vars.wakeupSeconds);
 }
 
-void wait_timer1min() {
+void wait_timershort() {
 	blinkDebug(7);
-	wait_timer(60);
+	wait_timer(20);
 }
 
 void wait_timer(int wks) {

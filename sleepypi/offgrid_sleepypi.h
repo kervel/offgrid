@@ -19,7 +19,7 @@ void receive_event(int bytes_received);
 void wait_alarm();
 void wait_timer();
 void wait_timer(int secs);
-void wait_timer1min();
+void wait_timershort();
 void execute_command();
 
 struct SleepyPiRegisterMap {
