@@ -78,21 +78,28 @@ void loop()
 	piStatusTracker.pollForChanges(true);
 	regmap.vars.inputVoltage = SleepyPi.supplyVoltage();
 	regmap.vars.rpiCurrent = SleepyPi.rpiCurrent();
-	if (regmap.vars.inputVoltage > 0 && regmap.vars.inputVoltage < regmap.vars.inputVoltageStopPi) {
+	if (regmap.vars.inputVoltage > 0
+			&& regmap.vars.inputVoltageStopPi > 0
+			&& regmap.vars.inputVoltageResume > 0
+			&& regmap.vars.inputVoltage < regmap.vars.inputVoltageStopPi) {
 		// voltage dropped too low --> initiate shutdown sequence
 		piStatusTracker.onPowerOff(0);
 		piStatusTracker.startShutdownHandshake();
 		blinkDebug(20);
 		isPowerSleep = true;
 	}
-	if (isPowerSleep && piStatusTracker.getCurrentStatus() == eOFF && regmap.vars.inputVoltage >= regmap.vars.inputVoltageResume) {
+	if (isPowerSleep
+			&& piStatusTracker.getCurrentStatus() == eOFF
+			&& regmap.vars.inputVoltage >= regmap.vars.inputVoltageResume) {
 		// voltage high enough --> start the rpi back up
 		SleepyPi.enablePiPower(true);
 		blinkDebug(3);
 		isPowerSleep = false;
 	}
 
-	if (!isPowerSleep &&  !piStatusTracker.hasPowerOffCallback() && piStatusTracker.getCurrentStatus() == eOFF) {
+	if (!isPowerSleep
+			&& !piStatusTracker.hasPowerOffCallback()
+			&& piStatusTracker.getCurrentStatus() == eOFF) {
 		// spontaneous shutdown of rpi, wait 1 minute and power back up!
 		wait_timer1min();
 	}

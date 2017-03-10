@@ -1,5 +1,9 @@
 from __future__ import print_function
-from smbus import SMBus
+try:
+    from smbus import SMBus
+except:
+    from smbus2 import SMBus
+
 import struct
 
 REG_SIGNATURE = 0
