@@ -36,7 +36,7 @@ if args.sleep_timer:
 
 if args.sleep_alarm:
     s = args.sleep_alarm
-    if len(s.split[':'] != 2):
+    if len(s.split[':']) != 2:
         raise Exception("use HH:MM")
     h = s.split[':'][0]
     m = s.split[':'][1]
