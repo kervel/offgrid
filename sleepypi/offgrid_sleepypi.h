@@ -18,7 +18,7 @@ void request_event();
 void receive_event(int bytes_received);
 void wait_alarm();
 void wait_timer();
-void wait_timer(int secs);
+void wait_timer(long secs);
 void wait_timershort();
 void execute_command();
 
