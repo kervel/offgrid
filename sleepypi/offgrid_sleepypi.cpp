@@ -71,28 +71,28 @@ void dumpStatusSerial() {
 void dumpState() {
 	switch(piStatusTracker.getCurrentStatus()) {
 		case eOFF:
-			debugpln('off');
+			debugpln("off");
 			break;
 		case eBOOTING:
-			debugpln('booting');
+			debugpln("booting");
 			break;
 		case eBOOTING_TOOLONG:
-			debugpln('bootinglong');
+			debugpln("bootinglong");
 			break;
 		case eRUNNING:
-			debugpln('running');
+			debugpln("running");
 			break;
 		case eHALTING:
-			debugpln('halting');
+			debugpln("halting");
 			break;
 		case eHALTING_TOOLONG:
-			debugpln('haltinglong');
+			debugpln("haltinglong");
 			break;
 		case eHALTED:
-			debugpln('halted');
+			debugpln("halted");
 			break;
 		case eUNKNOWN:
-			debugpln('unknown');
+			debugpln("unknown");
 			break;
 
 	}
