@@ -68,6 +68,36 @@ void dumpStatusSerial() {
     debugp(regmap.vars.command);
 }
 
+void dumpState() {
+	switch(piStatusTracker.getCurrentStatus()) {
+		case eOFF:
+			debugpln('off');
+			break;
+		case eBOOTING:
+			debugpln('booting');
+			break;
+		case eBOOTING_TOOLONG:
+			debugpln('bootinglong');
+			break;
+		case eRUNNING:
+			debugpln('running');
+			break;
+		case eHALTING:
+			debugpln('halting');
+			break;
+		case eHALTING_TOOLONG:
+			debugpln('haltinglong');
+			break;
+		case eHALTED:
+			debugpln('halted');
+			break;
+		case eUNKNOWN:
+			debugpln('unknown');
+			break;
+
+	}
+}
+
 // The loop function is called in an endless loop
 void loop()
 {
@@ -78,6 +108,9 @@ void loop()
 #endif
 
 	piStatusTracker.pollForChanges(true);
+#ifdef DEBUG
+	dumpState();
+#endif
 	regmap.vars.inputVoltage = SleepyPi.supplyVoltage();
 	regmap.vars.rpiCurrent = SleepyPi.rpiCurrent();
 	if (regmap.vars.inputVoltage > 0
