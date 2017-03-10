@@ -17,6 +17,8 @@ pi = SleepyPi()
 if args.stats == True:
     print("I: {amps}".format(amps=pi.get_rpi_current()))
     print("V: {volts}".format(volts=pi.get_supply_voltage()))
+    print('Susp: {v}'.format(v=pi.get_minimum_run_voltage()))
+    print('Res: {v}'.format(v=pi.get_resume_voltage()))
     sys.exit(0)
 
 if args.set_suspend_voltage:
@@ -34,13 +36,13 @@ if args.sleep_timer:
 
 if args.sleep_alarm:
     s = args.sleep_alarm
-    if len(s.split[':'] != 2):
+    if len(s.split(':')) != 2:
         raise Exception("use HH:MM")
-    h = s.split[':'][0]
-    m = s.split[':'][1]
-    if not h.isnumeric() or int(h) > 23 or int(h) < 0:
+    h = s.split(':')[0]
+    m = s.split(':')[1]
+    if not h.isdigit() or int(h) > 23 or int(h) < 0:
         raise Exception('invalid hour %s' % h)
-    if not m.isnumeric() or int(m) > 59 or int(m) < 0:
+    if not m.isdigit() or int(m) > 59 or int(m) < 0:
         raise Exception('invalid minute %s' % m)
     pi.sleepAlarm(int(h),int(m))
     print("pi should now get a shutdown command from arduino")
