@@ -25,6 +25,16 @@ bool isPowerSleep = false;
 byte receivedCommands[MAX_SENT_BYTES];
 
 
+void blinkDebug(unsigned char nblinks) {
+	for (unsigned char x=0; x<nblinks; x++) {
+		digitalWrite(LED_BUILTIN,HIGH);
+		delay(50);
+		digitalWrite(LED_BUILTIN,LOW);
+		delay(50);
+	}
+}
+
+
 //The setup function is called once at startup of the sketch
 void setup()
 {
@@ -72,11 +82,13 @@ void loop()
 		// voltage dropped too low --> initiate shutdown sequence
 		piStatusTracker.onPowerOff(0);
 		piStatusTracker.startShutdownHandshake();
+		blinkDebug(20);
 		isPowerSleep = true;
 	}
 	if (isPowerSleep && piStatusTracker.getCurrentStatus() == eOFF && regmap.vars.inputVoltage >= regmap.vars.inputVoltageResume) {
 		// voltage high enough --> start the rpi back up
 		SleepyPi.enablePiPower(true);
+		blinkDebug(3);
 		isPowerSleep = false;
 	}
 
@@ -173,10 +185,12 @@ void wait_timer() {
 }
 
 void wait_timer1min() {
+	blinkDebug(7);
 	wait_timer(60);
 }
 
 void wait_timer(int wks) {
+	blinkDebug(3);
 	debugpln("waiting for timer...");
     attachInterrupt(0, alarm_isr, FALLING);    // Alarm pin
     eTIMER_TIMEBASE tb = eTB_SECOND;
@@ -197,10 +211,12 @@ void wait_timer(int wks) {
     detachInterrupt(0);
     SleepyPi.ackTimer1();
 	debugpln("got timer interrupt...");
+    blinkDebug(7);
     SleepyPi.enablePiPower(true);
 }
 
 void wait_alarm() {
+	blinkDebug(3);
 	debugpln("waiting for alarm...");
 	attachInterrupt(0, alarm_isr, FALLING);		// Alarm pin
 	SleepyPi.enableWakeupAlarm(true);
@@ -210,6 +226,7 @@ void wait_alarm() {
 	detachInterrupt(0);
 	SleepyPi.ackAlarm();
 	debugpln("got alarm...");
+	blinkDebug(7);
 	SleepyPi.enablePiPower(true);
 }
 
