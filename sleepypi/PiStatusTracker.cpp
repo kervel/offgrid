@@ -9,6 +9,7 @@
 #include <SleepyPi2.h>
 
 #define CMD_PI_TO_SHDWN_PIN	17
+#define kPI_CURRENT_THRESHOLD_MA   85
 
 
 PiStatusTracker::PiStatusTracker() {
@@ -49,6 +50,8 @@ bool PiStatusTracker::hasPowerOffCallback() {
 
 void PiStatusTracker::pollForChanges(bool autoManagePower) {
 	bool stat = SleepyPi.checkPiStatus(false);
+	bool stat_ma = SleepyPi.checkPiStatus(kPI_CURRENT_THRESHOLD_MA,false);
+
 	bool pwr = SleepyPi.power_on;
 
 	if ((theStatus != eOFF) && !pwr) {
@@ -98,6 +101,9 @@ void PiStatusTracker::pollForChanges(bool autoManagePower) {
 				break;
 			case eRUNNING:
 				if (!stat) {
+					changeStatus(eHALTED);
+				}
+				if (!stat_ma) {
 					changeStatus(eHALTED);
 				}
 				break;
