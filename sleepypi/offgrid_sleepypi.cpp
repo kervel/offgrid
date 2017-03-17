@@ -16,6 +16,7 @@
 #endif
 
 #define SLAVE_ADDRESS 0x36
+#define POWER_BUTTON_PIN	3
 #define MAX_SENT_BYTES 5
 
 union SleepyPiRegisters regmap;
@@ -46,7 +47,7 @@ void setup()
 	if (!SleepyPi.rtcInit(false)) {
 		Serial.println("no RTC found");
 	}
-	SleepyPi.enablePiPower(false);
+	SleepyPi.enablePiPower(true);
 	/* rtcInit switches to I2C master mode for rtc setup.
 	 * however, we want to be a slave for the raspberry pi, so switch back to slave mode.
 	 * the wire library switches back to master mode when needed
@@ -125,6 +126,12 @@ void loop()
 		debugpln("pwrslp");
 		blinkDebug(20);
 		isPowerSleep = true;
+	}
+	if (piStatusTracker.getCurrentStatus() == eBOOTING ||
+			piStatusTracker.getCurrentStatus() == eRUNNING) {
+		if (digitalRead(POWER_BUTTON_PIN) == LOW) {
+			piStatusTracker.startShutdownHandshake();
+		}
 	}
 	if (isPowerSleep
 			&& piStatusTracker.getCurrentStatus() == eOFF
