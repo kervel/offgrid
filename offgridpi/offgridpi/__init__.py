@@ -97,3 +97,15 @@ class SleepyPi():
 
     def disableExtPower(self):
         self.sendCommand(CMD_POWEROFF_EXT)
+
+class SimulatedPi:
+    def __init__(self):
+        self._current = 300
+        self._voltage = 12.3
+
+    def get_rpi_current(self):
+        return self._current
+
+
+    def get_supply_voltage(self):
+        return self._voltage
