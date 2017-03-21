@@ -68,8 +68,15 @@ def set_resume_voltage(client,userdata,message):
     except:
         print("error set  minimum run voltage to %s" % payload)
 
+connected = [0]
 
+def s_on_connect(client,userdata,flags,rc):
+    connected.clear()
+    connected.append(1)
+    print("connected!")
 
+def s_on_log(client,userdata,level,buf):
+    print("L:"+buf)
 
 def tkphoto(client,userdata,message):
     print("taking photo!")
@@ -102,14 +109,20 @@ args = parser.parse_args()
 
 
 mqttc = mqtt.Client('python_pub')
+print(mqttc)
+mqttc.on_log = s_on_log
 mqttc.username_pw_set(args.mqtt_user,args.mqtt_password)
 
 
 
 rootkey = args.mqtt_root_topic
 mqttc.will_set(rootkey+'/online',0,retain=True)
+
+mqttc.on_connect = s_on_connect
 x = mqttc.connect(args.mqtt_host, args.mqtt_port)
 print(x)
+
+
 
 def subscribe_with_callback(subtopic, callbackfunc):
     mqttc.subscribe(rootkey+subtopic)
@@ -126,6 +139,9 @@ old_c = {}
 pi = offgridpi.SimulatedPi()
 if not args.simulate:
     pi = offgridpi.SleepyPi()
+
+while connected[0] == 0:
+    mqttc.loop(10)
 
 while True:
     new_c = build_ifaces_topics()

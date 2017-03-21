@@ -5,6 +5,7 @@ except:
     from smbus2 import SMBus
 
 import struct
+import random
 
 REG_SIGNATURE = 0
 REG_VOLTAGE = 1
@@ -104,8 +105,8 @@ class SimulatedPi:
         self._voltage = 12.3
 
     def get_rpi_current(self):
-        return self._current
+        return self._current + random.random()*100
 
 
     def get_supply_voltage(self):
-        return self._voltage
+        return self._voltage + random.random() * 2 - 1
