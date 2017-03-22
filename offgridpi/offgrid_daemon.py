@@ -128,11 +128,6 @@ def subscribe_with_callback(subtopic, callbackfunc):
     mqttc.subscribe(rootkey+subtopic)
     mqttc.message_callback_add(rootkey+subtopic, callbackfunc)
 
-subscribe_with_callback('/takephoto',tkphoto)
-subscribe_with_callback('/v_minimum/setpoint',set_min_run_voltage)
-subscribe_with_callback('/v_resume/setpoint',set_resume_voltage)
-subscribe_with_callback('/sleeptimer/setpoint',set_sleep_register)
-subscribe_with_callback('/sleeptimer/activate',activate_sleep)
 
 
 old_c = {}
@@ -142,6 +137,13 @@ if not args.simulate:
 
 while connected[0] == 0:
     mqttc.loop(10)
+
+subscribe_with_callback('/takephoto',tkphoto)
+subscribe_with_callback('/v_minimum/setpoint',set_min_run_voltage)
+subscribe_with_callback('/v_resume/setpoint',set_resume_voltage)
+subscribe_with_callback('/sleeptimer/setpoint',set_sleep_register)
+subscribe_with_callback('/sleeptimer/activate',activate_sleep)
+
 
 while True:
     new_c = build_ifaces_topics()
