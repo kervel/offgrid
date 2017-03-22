@@ -6,6 +6,7 @@ except:
 
 import struct
 import random
+import os
 
 REG_SIGNATURE = 0
 REG_VOLTAGE = 1
@@ -98,6 +99,45 @@ class SleepyPi():
 
     def disableExtPower(self):
         self.sendCommand(CMD_POWEROFF_EXT)
+
+    def safe_reset_arduino(self):
+        import time
+        self.enableSleepyPiBypass()
+        self.resetArduinoViaGPIO()
+        time.sleep(20)
+        self.disableSleepyPiBypass()
+
+    def sync(self):
+        if hasattr(os, 'sync'):
+            sync = os.sync
+        else:
+            import ctypes
+            libc = ctypes.CDLL("libc.so.6")
+            def sync():
+                libc.sync()
+        sync()
+
+    def enableSleepyPiBypass(self):
+        self.bus.write_byte(0x24,0xFD)
+        #i2cset -y 1 0x24 0xFD
+        pass
+
+    def disableSleepyPiBypass(self):
+        self.bus.write_byte(0x24,0xFF)
+        #i2cset -y 1 0x24 0xFF
+        pass
+
+    def resetArduinoViaGPIO(self):
+        # code from avrdude-autoreset
+        self.sync()
+        import RPi.GPIO
+        import time
+        pin = 11
+        RPi.GPIO.setmode(RPi.GPIO.BOARD)
+        RPi.GPIO.setup(pin, RPi.GPIO.OUT)
+        RPi.GPIO.output(pin, RPi.GPIO.HIGH)
+        time.sleep(0.12)
+        RPi.GPIO.output(pin, RPi.GPIO.LOW)
 
 class SimulatedPi:
     def __init__(self):
