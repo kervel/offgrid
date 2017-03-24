@@ -150,3 +150,7 @@ class SimulatedPi:
 
     def get_supply_voltage(self):
         return self._voltage + random.random() * 2 - 1
+
+
+    def sleepTimer(self,seconds):
+        print("sleep asked for %i seconds" % seconds)
