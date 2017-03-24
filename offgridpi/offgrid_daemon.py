@@ -6,7 +6,7 @@ import cv2
 import offgridpi
 import argparse
 import datetime
-
+from offgridpi import wake_sleep_sheduler
 
 
 
@@ -103,9 +103,14 @@ parser.add_argument('--mqtt-password', type=str, help='MQTT password', metavar='
 parser.add_argument('--mqtt-root-topic', type=str, help='MQTT root topic', metavar='N')
 parser.add_argument('--simulate',action='store_true',help='simulate (do not try to connect to sleepy pi)')
 parser.add_argument('--sleep-alarm', type=str, help='sleep until timestamp X (format: HH:MM)', metavar='X')
+parser.add_argument('--always-run-voltage', type=float, help='voltage above which we dont go to sleep anymore', default=13.3)
+parser.add_argument('--minimum-run-voltage',type=float,help='if voltage drops below X, go into deep sleep mode (do not overwrite settings if already present in arduino)', default=10.5)
+parser.add_argument('--resume-voltage', type='float', help='if voltage gets above Y, wake up from deep sleep mode (do not overwrite settings if already present in arduino)', default=11)
+parser.add_argument('--regime', type=str, help='regime eg C:600:3600 cyclic wake 10 minutes sleep 1 hour')
+
 args = parser.parse_args()
 
-
+regime = wake_sleep_sheduler.parse_definition(args.regime)
 
 
 mqttc = mqtt.Client('python_pub')
@@ -138,14 +143,21 @@ if not args.simulate:
 while connected[0] == 0:
     mqttc.loop(10)
 
+if (pi.get_minimum_run_voltage() == 0):
+    pi.set_resume_voltage(args.resume_voltage)
+    pi.set_minimum_run_voltage(args.minimum_run_voltage)
+
 subscribe_with_callback('/takephoto',tkphoto)
 subscribe_with_callback('/v_minimum/setpoint',set_min_run_voltage)
 subscribe_with_callback('/v_resume/setpoint',set_resume_voltage)
 subscribe_with_callback('/sleeptimer/setpoint',set_sleep_register)
 subscribe_with_callback('/sleeptimer/activate',activate_sleep)
 
+startup_time = datetime.datetime.now()
 
 while True:
+    
+    now = datetime.datetime.now()
     new_c = build_ifaces_topics()
     new_c['/online'] = 1
     new_c['/current'] = pi.get_rpi_current()
@@ -156,9 +168,10 @@ while True:
         print("publishing %s to %s" % (rootkey + k, diff[k]))
         mqttc.publish(rootkey + k, diff[k],retain=True)
     start_loop = datetime.datetime.now()
-    while datetime.datetime.now() - start_loop < datetime.timedelta(seconds=30):
+    while now - start_loop < datetime.timedelta(seconds=30):
         x = mqttc.loop(20)
         if x > 0:
             raise Exception(x)
+        now = datetime.datetime.now()
 
 
