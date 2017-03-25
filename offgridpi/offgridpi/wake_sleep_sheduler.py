@@ -36,15 +36,20 @@ class AlwaysRunRegime(Regime):
         return 0
 
 def parse_definition(ss):
-    s = ss.lower()
+    if ss is None:
+        s = ''
+    else:
+        s = ss.lower()
     if s.startswith('c:'):
         splitted = s.split(':')
         runtime = int(splitted[1])
         sleeptime = int(splitted[2])
         r =CyclicRegime(timedelta(seconds=runtime),timedelta(seconds=sleeptime))
+        r.definition = ss
     elif s == '' or s == 'always':
         r = AlwaysRunRegime()
+        r.definition = 'always'
     else:
         r = AlwaysRunRegime()
-    r.definition = ss
+        r.definition = 'always'
     return r

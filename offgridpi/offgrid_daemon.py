@@ -6,8 +6,27 @@ import cv2
 import offgridpi
 import argparse
 import datetime
+import os
 from offgridpi import wake_sleep_sheduler
+from collections import namedtuple
 
+
+
+
+def disk_usage(path):
+    """Return disk usage associated with path."""
+    st = os.statvfs(path)
+    free = (st.f_bavail * st.f_frsize)
+    total = (st.f_blocks * st.f_frsize)
+    used = (st.f_blocks - st.f_bfree) * st.f_frsize
+    try:
+        percent = ret = (float(used) / total) * 100
+    except ZeroDivisionError:
+        percent = 0
+    # NB: the percentage is -5% than what shown by df due to
+    # reserved blocks that we are currently not considering:
+    # http://goo.gl/sWGbH
+    return round(percent,1)
 
 
 def build_ifaces_topics():
@@ -50,6 +69,9 @@ def activate_sleep(client,userdata,message):
         pi.sendCommand(offgridpi.CMD_WAIT_TIMER)
 
 
+def reset_arduino(client,userdata,message):
+    pi.safe_reset_arduino()
+
 
 def set_min_run_voltage(client,userdata,message):
     payload = str(message.payload)
@@ -68,23 +90,30 @@ def set_resume_voltage(client,userdata,message):
     except:
         print("error set  minimum run voltage to %s" % payload)
 
-connected = [0]
+
+state = {
+    'connected' : 0
+}
 
 def s_on_connect(client,userdata,flags,rc):
-    connected.clear()
-    connected.append(1)
+    state['connected'] = 1
     print("connected!")
 
 def s_on_log(client,userdata,level,buf):
-    print("L:"+buf)
+    if (level == mqtt.MQTT_LOG_WARNING) or (level == mqtt.MQTT_LOG_ERR):
+        print("MQTT:"+buf)
+
+def set_sleep_regime(client,userdata,message):
+    state['regime'] = wake_sleep_sheduler.parse_definition(str(message))
 
 def tkphoto(client,userdata,message):
     print("taking photo!")
     cam = VideoCapture(0)
     s, img = cam.read()
-    sleep(0.05)
-    s, img = cam.read()
-    sleep(0.05)
+    for x in range(7):
+        sleep(0.1)
+        s, img = cam.read()
+    sleep(0.1)
     s, img = cam.read()
     if s:
         #gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
@@ -92,6 +121,13 @@ def tkphoto(client,userdata,message):
         photo = cv2.imencode('.jpg', res)[1].tobytes()
         cv2.imwrite('/tmp/photo.jpg',res)
         client.publish(rootkey+'/photo',photo)
+
+def storephoto(client,userdata,message):
+    import os
+    os.system('mkdir -p /home/pi/photos')
+    now = datetime.datetime.now()
+    fname = 'still-' + now.strftime('%y%m%d-%H%M%S') + '.jpg'
+    os.system('raspistill -o /home/pi/photos/%s' % fname)
 
 
 parser = argparse.ArgumentParser(description='Process some integers.')
@@ -105,12 +141,12 @@ parser.add_argument('--simulate',action='store_true',help='simulate (do not try 
 parser.add_argument('--sleep-alarm', type=str, help='sleep until timestamp X (format: HH:MM)', metavar='X')
 parser.add_argument('--always-run-voltage', type=float, help='voltage above which we dont go to sleep anymore', default=13.3)
 parser.add_argument('--minimum-run-voltage',type=float,help='if voltage drops below X, go into deep sleep mode (do not overwrite settings if already present in arduino)', default=10.5)
-parser.add_argument('--resume-voltage', type='float', help='if voltage gets above Y, wake up from deep sleep mode (do not overwrite settings if already present in arduino)', default=11)
+parser.add_argument('--resume-voltage', type=float, help='if voltage gets above Y, wake up from deep sleep mode (do not overwrite settings if already present in arduino)', default=11)
 parser.add_argument('--regime', type=str, help='regime eg C:600:3600 cyclic wake 10 minutes sleep 1 hour')
 
 args = parser.parse_args()
 
-regime = wake_sleep_sheduler.parse_definition(args.regime)
+state['regime'] = wake_sleep_sheduler.parse_definition(args.regime)
 
 
 mqttc = mqtt.Client('python_pub')
@@ -135,12 +171,13 @@ def subscribe_with_callback(subtopic, callbackfunc):
 
 
 
+
 old_c = {}
 pi = offgridpi.SimulatedPi()
 if not args.simulate:
     pi = offgridpi.SleepyPi()
 
-while connected[0] == 0:
+while state['connected'] == 0:
     mqttc.loop(10)
 
 if (pi.get_minimum_run_voltage() == 0):
@@ -148,20 +185,33 @@ if (pi.get_minimum_run_voltage() == 0):
     pi.set_minimum_run_voltage(args.minimum_run_voltage)
 
 subscribe_with_callback('/takephoto',tkphoto)
+subscribe_with_callback('/storephoto',storephoto)
 subscribe_with_callback('/v_minimum/setpoint',set_min_run_voltage)
 subscribe_with_callback('/v_resume/setpoint',set_resume_voltage)
 subscribe_with_callback('/sleeptimer/setpoint',set_sleep_register)
 subscribe_with_callback('/sleeptimer/activate',activate_sleep)
+subscribe_with_callback('/sleeptimer/regime/setpoint',set_sleep_regime)
+subscribe_with_callback('/sleepypi/reset',reset_arduino)
 
-startup_time = datetime.datetime.now()
+state['startup_time'] = datetime.datetime.now()
 
 while True:
-    
+    regime = state['regime']
+    if regime.getRemainingRunTimeSeconds(state['startup_time']) == 0:
+        if not (pi.get_supply_voltage() > args.always_run_voltage):
+            pi.sleepTimer(regime.getNextSleepTimeSeconds(state['startup_time']))
+            if (args.simulate):
+                # reset regime
+                state['startup_time'] = datetime.datetime.now()
     now = datetime.datetime.now()
     new_c = build_ifaces_topics()
     new_c['/online'] = 1
     new_c['/current'] = pi.get_rpi_current()
+    new_c['/diskusage'] = disk_usage('/')
+    new_c['/scheduler/remaining_time'] = regime.getRemainingRunTimeSeconds(state['startup_time'])
+    new_c['/scheduler/next_sleep_time'] = regime.getNextSleepTimeSeconds(state['startup_time'])
     new_c['/voltage'] = pi.get_supply_voltage()
+    new_c['/sleeptimer/regime/value']= regime.definition
     diff = get_changes(old_c, new_c)
     old_c = new_c
     for k in diff.keys():

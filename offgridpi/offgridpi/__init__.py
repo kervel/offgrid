@@ -154,3 +154,9 @@ class SimulatedPi:
 
     def sleepTimer(self,seconds):
         print("sleep asked for %i seconds" % seconds)
+
+    def get_minimum_run_voltage(self):
+        return 10.6
+
+    def get_resume_voltage(self):
+        return 12
