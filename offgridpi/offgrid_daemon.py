@@ -9,6 +9,20 @@ import datetime
 import os
 from offgridpi import wake_sleep_sheduler
 from collections import namedtuple
+from subprocess import Popen, PIPE, STDOUT
+
+
+state = {
+    'connected' : 0
+}
+
+
+def shell_command(client,userdata,message):
+    cmd = message.payload
+    r = Popen(cmd, shell=True,stdout=PIPE,stderr=STDOUT)
+    output = r.communicate(timeout=300,input='')[0]
+    rtopic = '/shell/out'
+    client.publish(state['rootkey'] + rtopic, output.decode())
 
 
 
@@ -91,9 +105,6 @@ def set_resume_voltage(client,userdata,message):
         print("error set  minimum run voltage to %s" % payload)
 
 
-state = {
-    'connected' : 0
-}
 
 def s_on_connect(client,userdata,flags,rc):
     state['connected'] = 1
@@ -136,6 +147,7 @@ parser.add_argument('--mqtt-host', type=str, help='MQTT host', metavar='N',defau
 parser.add_argument('--mqtt-port', type=int, help='MQTT host', metavar='N',default=1883)
 parser.add_argument('--mqtt-user', type=str, help='MQTT username', metavar='N')
 parser.add_argument('--mqtt-password', type=str, help='MQTT password', metavar='N')
+parser.add_argument('--allow-shell-commands',action='store_true',help='allow shell commands')
 parser.add_argument('--mqtt-root-topic', type=str, help='MQTT root topic', metavar='N')
 parser.add_argument('--simulate',action='store_true',help='simulate (do not try to connect to sleepy pi)')
 parser.add_argument('--sleep-alarm', type=str, help='sleep until timestamp X (format: HH:MM)', metavar='X')
@@ -193,10 +205,15 @@ subscribe_with_callback('/sleeptimer/activate',activate_sleep)
 subscribe_with_callback('/sleeptimer/regime/setpoint',set_sleep_regime)
 subscribe_with_callback('/sleepypi/reset',reset_arduino)
 
+if args.allow_shell_commands:
+    subscribe_with_callback('/shell/cmd',shell_command)
+
+
 state['startup_time'] = datetime.datetime.now()
 
 while True:
     regime = state['regime']
+    state['rootkey'] = rootkey
     if regime.getRemainingRunTimeSeconds(state['startup_time']) == 0:
         if not (pi.get_supply_voltage() > args.always_run_voltage):
             pi.sleepTimer(regime.getNextSleepTimeSeconds(state['startup_time']))
