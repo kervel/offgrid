@@ -71,7 +71,7 @@ def set_resume_voltage(client,userdata,message):
 connected = [0]
 
 def s_on_connect(client,userdata,flags,rc):
-    connected.clear()
+    del connected[:]
     connected.append(1)
     print("connected!")
 
@@ -89,7 +89,8 @@ def tkphoto(client,userdata,message):
     if s:
         #gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
         res = cv2.resize(img,dsize=(640,480))
-        photo = cv2.imencode('.jpg', res)[1].tobytes()
+        photo = bytearray(cv2.imencode('.jpg', res)[1].tostring())
+        print(type(photo))
         cv2.imwrite('/tmp/photo.jpg',res)
         client.publish(rootkey+'/photo',photo)
 
