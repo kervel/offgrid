@@ -20,7 +20,7 @@ state = {
 def shell_command(client,userdata,message):
     cmd = message.payload
     r = Popen(cmd, shell=True,stdout=PIPE,stderr=STDOUT)
-    output = r.communicate(timeout=300,input='')[0]
+    output = r.communicate(input='')[0]
     rtopic = '/shell/out'
     client.publish(state['rootkey'] + rtopic, output.decode())
 
@@ -123,7 +123,8 @@ def s_on_log(client,userdata,level,buf):
         print("MQTT:"+buf)
 
 def set_sleep_regime(client,userdata,message):
-    state['regime'] = wake_sleep_sheduler.parse_definition(str(message))
+    state['regime'] = wake_sleep_sheduler.parse_definition(str(message.payload))
+    print("updated sleep regime to " + str(state['regime']))
 
 def tkphoto(client,userdata,message):
     print("taking photo!")
@@ -137,7 +138,8 @@ def tkphoto(client,userdata,message):
     if s:
         #gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
         res = cv2.resize(img,dsize=(640,480))
-        photo = cv2.imencode('.jpg', res)[1].tobytes()
+        photo = bytearray(cv2.imencode('.jpg', res)[1].tostring())
+        print(type(photo))
         cv2.imwrite('/tmp/photo.jpg',res)
         client.publish(state['rootkey']+'/photo',photo)
         client.publish(state['rootkey']+'/phototaken',1)
