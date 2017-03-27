@@ -229,10 +229,10 @@ while True:
     state['rootkey'] = rootkey
     if regime.getRemainingRunTimeSeconds(state['startup_time']) == 0:
         if not (pi.get_supply_voltage() > args.always_run_voltage):
-        sleeptime= regime.getNextSleepTimeSeconds(state['startup_time'])
-        waketime = datetime.datetime.now() + datetime.timedelta(seconds=sleeptime)
-        waketimestr = waketime.strftime('%d/%m/%y %H:%M')
-        mqttc.publish(rootkey + '/seeyouat', waketimestr, retain=True)
+            sleeptime= regime.getNextSleepTimeSeconds(state['startup_time'])
+            waketime = datetime.datetime.now() + datetime.timedelta(seconds=sleeptime)
+            waketimestr = waketime.strftime('%d/%m/%y %H:%M')
+            mqttc.publish(rootkey + '/seeyouat', waketimestr, retain=True)
             pi.sleepTimer(sleeptime)
             if (args.simulate):
                 # reset regime
