@@ -10,7 +10,7 @@ class Regime:
 
 class CyclicRegime(Regime):
     def __init__(self,run_time = timedelta(seconds=600),sleep_time=timedelta(seconds=3600)):
-        if run_time.seconds() < 180:
+        if run_time.seconds < 180:
             ## guard against sleep forever
             run_time = timedelta(seconds=180)
         if not isinstance(run_time,timedelta):
