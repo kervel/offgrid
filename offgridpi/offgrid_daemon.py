@@ -83,6 +83,14 @@ def activate_sleep(client,userdata,message):
         pi.sendCommand(offgridpi.CMD_WAIT_TIMER)
 
 
+def reset_on_problems():
+    if not pi.detect_sleepy():
+        print("not getting response from sleepy pi, resetting")
+        pi.safe_reset_arduino()
+        import sys
+        sys.exit(1)
+
+
 def reset_arduino(client,userdata,message):
     pi.safe_reset_arduino()
 
@@ -155,6 +163,7 @@ parser.add_argument('--always-run-voltage', type=float, help='voltage above whic
 parser.add_argument('--minimum-run-voltage',type=float,help='if voltage drops below X, go into deep sleep mode (do not overwrite settings if already present in arduino)', default=10.5)
 parser.add_argument('--resume-voltage', type=float, help='if voltage gets above Y, wake up from deep sleep mode (do not overwrite settings if already present in arduino)', default=11)
 parser.add_argument('--regime', type=str, help='regime eg C:600:3600 cyclic wake 10 minutes sleep 1 hour')
+parser.add_argument('--reset-on-fail',action='store_true',help='try to reset the arduino when we cannot get response, then exit')
 
 args = parser.parse_args()
 
@@ -240,5 +249,6 @@ while True:
         if x > 0:
             raise Exception(x)
         now = datetime.datetime.now()
+    reset_on_problems()
 
 

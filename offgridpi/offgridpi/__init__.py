@@ -33,7 +33,7 @@ class SleepyPi():
         self.bus = SMBus(1)
         self.address = 0x36
         if not self.detect_sleepy():
-            raise Exception("sleepy pi not detected")
+            print("sleepy pi not detected")
 
     def i2c_get_float32le(self,register):
         b1 = self.bus.read_byte_data(self.address,register)
