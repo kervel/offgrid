@@ -20,7 +20,7 @@ state = {
 def shell_command(client,userdata,message):
     cmd = message.payload
     r = Popen(cmd, shell=True,stdout=PIPE,stderr=STDOUT)
-    output = r.communicate(timeout=300,input='')[0]
+    output = r.communicate(input='')[0]
     rtopic = '/shell/out'
     client.publish(state['rootkey'] + rtopic, output.decode())
 
