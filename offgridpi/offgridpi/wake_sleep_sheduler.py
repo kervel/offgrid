@@ -24,10 +24,10 @@ class CyclicRegime(Regime):
         if (uptime > self.run_time):
             return 0
         remaining = self.run_time - uptime
-        return remaining.seconds()
+        return remaining.seconds
 
     def getNextSleepTimeSeconds(self,start_run):
-        return self.sleep_time.seconds()
+        return self.sleep_time.seconds
 
 class AlwaysRunRegime(Regime):
     def getRemainingRunTimeSeconds(self, start_run):
