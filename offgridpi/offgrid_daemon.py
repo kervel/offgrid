@@ -139,7 +139,8 @@ def tkphoto(client,userdata,message):
         res = cv2.resize(img,dsize=(640,480))
         photo = cv2.imencode('.jpg', res)[1].tobytes()
         cv2.imwrite('/tmp/photo.jpg',res)
-        client.publish(rootkey+'/photo',photo)
+        client.publish(state['rootkey']+'/photo',photo)
+        client.publish(state['rootkey']+'/phototaken',1)
 
 def storephoto(client,userdata,message):
     import os
@@ -147,6 +148,7 @@ def storephoto(client,userdata,message):
     now = datetime.datetime.now()
     fname = 'still-' + now.strftime('%y%m%d-%H%M%S') + '.jpg'
     os.system('raspistill -o /home/pi/photos/%s' % fname)
+    client.publish(state['rootkey']+'/photostored',1)
 
 
 parser = argparse.ArgumentParser(description='Process some integers.')
