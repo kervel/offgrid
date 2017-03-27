@@ -33,7 +33,7 @@ class SleepyPi():
         self.bus = SMBus(1)
         self.address = 0x36
         if not self.detect_sleepy():
-            raise Exception("sleepy pi not detected")
+            print("sleepy pi not detected")
 
     def i2c_get_float32le(self,register):
         b1 = self.bus.read_byte_data(self.address,register)
@@ -150,3 +150,13 @@ class SimulatedPi:
 
     def get_supply_voltage(self):
         return self._voltage + random.random() * 2 - 1
+
+
+    def sleepTimer(self,seconds):
+        print("sleep asked for %i seconds" % seconds)
+
+    def get_minimum_run_voltage(self):
+        return 10.6
+
+    def get_resume_voltage(self):
+        return 12
