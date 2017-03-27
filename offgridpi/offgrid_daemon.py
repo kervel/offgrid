@@ -123,7 +123,8 @@ def s_on_log(client,userdata,level,buf):
         print("MQTT:"+buf)
 
 def set_sleep_regime(client,userdata,message):
-    state['regime'] = wake_sleep_sheduler.parse_definition(str(message))
+    state['regime'] = wake_sleep_sheduler.parse_definition(str(message.payload))
+    print("updated sleep regime to " + str(state['regime']))
 
 def tkphoto(client,userdata,message):
     print("taking photo!")
