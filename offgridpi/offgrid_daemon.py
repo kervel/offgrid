@@ -261,6 +261,10 @@ while True:
             if (args.simulate):
                 # reset regime
                 state['startup_time'] = datetime.datetime.now()
+        else:
+            # the voltage is  high, so we reset our timer, so that when the voltage drops we don't immediately shutdown
+            state['startup_time'] = datetime.datetime.now()
+
     now = datetime.datetime.now()
     new_c = build_ifaces_topics()
     new_c['/online'] = 1
