@@ -190,6 +190,12 @@ mqttc.will_set(rootkey+'/online',0,retain=True)
 first_try = datetime.datetime.now()
 
 
+old_c = {}
+pi = offgridpi.SimulatedPi()
+if not args.simulate:
+    pi = offgridpi.SleepyPi()
+
+
 success_c = False
 while not success_c:
     try:
@@ -215,10 +221,6 @@ def subscribe_with_callback(subtopic, callbackfunc):
 
 
 
-old_c = {}
-pi = offgridpi.SimulatedPi()
-if not args.simulate:
-    pi = offgridpi.SleepyPi()
 
 while state['connected'] == 0:
     mqttc.loop(10)
