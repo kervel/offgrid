@@ -202,8 +202,12 @@ pi = offgridpi.SimulatedPi()
 if not args.simulate:
     pi = offgridpi.SleepyPi()
 
+first_try = datetime.datetime.now()
 while state['connected'] == 0:
     mqttc.loop(10)
+    try_time = datetime.datetime.now() - first_try
+    if try_time.seconds > 200:
+        pi.sleepTimer(10)
 
 if (pi.get_minimum_run_voltage() == 0):
     pi.set_resume_voltage(args.resume_voltage)
