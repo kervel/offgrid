@@ -127,6 +127,33 @@ void loop()
 		blinkDebug(20);
 		isPowerSleep = true;
 	}
+
+
+	/**
+	 * watchdog timer: 0 = disabled, bigger than 0 = count down to 1. when 1 reached it reboots,
+	 * so the software needs to prevent this.
+	 */
+	if (piStatusTracker.getCurrentStatus() == eOFF ||
+			piStatusTracker.getCurrentStatus() == eUNKNOWN ||
+				piStatusTracker.getCurrentStatus() == eHALTED) {
+		regmap.vars.watchdog_counter = 0;
+	}
+	if (piStatusTracker.getCurrentStatus() == eBOOTING ||
+			piStatusTracker.getCurrentStatus() == eRUNNING) {
+		if (regmap.vars.watchdog_counter > 0) {
+			if (regmap.vars.watchdog_counter == 1) {
+				// limit reached, reboot!
+				piStatusTracker.startPowercycleHandshake();
+				regmap.vars.watchdog_counter = 0;
+			}
+			regmap.vars.watchdog_counter -= 1;
+		}
+	}
+
+	/**
+	 * end watchdog timer
+	 */
+
 	if (piStatusTracker.getCurrentStatus() == eBOOTING ||
 			piStatusTracker.getCurrentStatus() == eRUNNING) {
 		if (digitalRead(POWER_BUTTON_PIN) == LOW) {
@@ -159,7 +186,7 @@ void loop()
 		}
 	} else {
 		// we cannot power down if we don't have a stable status because then we need millis()
-		delay(700);
+		delay(2000);
 	}
 
 	if (regmap.vars.command != CMD_NOTHING) {

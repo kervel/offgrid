@@ -32,6 +32,7 @@ struct SleepyPiRegisterMap {
 	int wakeupAlarmMinute;
 	long wakeupSeconds;
 	unsigned char command;
+	unsigned char watchdog_counter;
 };
 
 #define REGMAP_SIZE sizeof(SleepyPiRegisterMap)

@@ -173,7 +173,7 @@ parser.add_argument('--minimum-run-voltage',type=float,help='if voltage drops be
 parser.add_argument('--resume-voltage', type=float, help='if voltage gets above Y, wake up from deep sleep mode (do not overwrite settings if already present in arduino)', default=11)
 parser.add_argument('--regime', type=str, help='regime eg C:600:3600 cyclic wake 10 minutes sleep 1 hour')
 parser.add_argument('--reset-on-fail',action='store_true',help='try to reset the arduino when we cannot get response, then exit')
-
+parser.add_argument('--enable-watchdog', action='store_true', help='use the sleepy pi as watchdog')
 args = parser.parse_args()
 
 state['regime'] = wake_sleep_sheduler.parse_definition(args.regime)
@@ -252,6 +252,9 @@ if args.allow_shell_commands:
 state['startup_time'] = datetime.datetime.now()
 
 while True:
+    if args.enable_watchdog:
+        ## watch out ! killing the daemon will reboot the rpi after 10 min
+        pi.enableWatchdog()
     regime = state['regime']
     state['rootkey'] = rootkey
     if regime.getRemainingRunTimeSeconds(state['startup_time']) == 0:
