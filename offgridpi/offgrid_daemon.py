@@ -1,6 +1,8 @@
 import paho.mqtt.client as mqtt
 import netifaces
 from time import sleep
+import socket
+import time
 from cv2 import *
 import cv2
 import offgridpi
@@ -184,8 +186,24 @@ mqttc.username_pw_set(args.mqtt_user,args.mqtt_password)
 rootkey = args.mqtt_root_topic
 mqttc.will_set(rootkey+'/online',0,retain=True)
 
-mqttc.on_connect = s_on_connect
-x = mqttc.connect(args.mqtt_host, args.mqtt_port)
+
+first_try = datetime.datetime.now()
+
+
+success_c = False
+while not success_c:
+    try:
+        mqttc.on_connect = s_on_connect
+        print("trying to connect to %s:%i" % (args.mqtt_host, args.mqtt_port))
+        x = mqttc.connect(args.mqtt_host, args.mqtt_port)
+        success_c = True
+    except socket.gaierror:
+        print("host not found, waiting 10 sec")
+        time.sleep(10)
+        try_time = datetime.datetime.now() - first_try
+        if try_time.seconds > 200:
+            pi.sleepTimer(10)
+
 print(x)
 
 
@@ -202,9 +220,9 @@ pi = offgridpi.SimulatedPi()
 if not args.simulate:
     pi = offgridpi.SleepyPi()
 
-first_try = datetime.datetime.now()
 while state['connected'] == 0:
     mqttc.loop(10)
+    print("waiting for connection ...")
     try_time = datetime.datetime.now() - first_try
     if try_time.seconds > 200:
         pi.sleepTimer(10)
