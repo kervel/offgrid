@@ -250,8 +250,9 @@ if args.allow_shell_commands:
 
 
 state['startup_time'] = datetime.datetime.now()
-
+state['count'] = 0
 while True:
+    state['count'] = state['count'] + 1
     regime = state['regime']
     state['rootkey'] = rootkey
     if regime.getRemainingRunTimeSeconds(state['startup_time']) == 0:
@@ -289,5 +290,8 @@ while True:
             raise Exception(x)
         now = datetime.datetime.now()
     reset_on_problems()
+    if state['count'] < 2:
+        # ntpdate might be running
+        state['startup_time'] = datetime.datetime.now()
 
 
