@@ -158,6 +158,8 @@ class SimulatedPi:
     def get_rpi_current(self):
         return self._current + random.random()*100
 
+    def enableWatchdog(self):
+        pass
 
     def get_supply_voltage(self):
         return self._voltage + random.random() * 2 - 1
