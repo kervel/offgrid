@@ -147,6 +147,7 @@ void loop()
 			if (regmap.vars.watchdog_counter == 1) {
 				// limit reached, reboot!
 				debugpln("wd!");
+				blinkDebug(3);
 				piStatusTracker.startPowercycleHandshake();
 				regmap.vars.watchdog_counter = WD_DEFAULT;
 			} else {
