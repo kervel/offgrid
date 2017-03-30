@@ -10,6 +10,7 @@ This is a collection of:
 
 * pi status tracker that implements a raspberry pi state machine (eg booting, running, halting, ...) without blocking/sleep calls on the arduino so that it interoperates with other software running on the arduino.
 * holding the power button on the arduino will initiate a reboot of the rpi (with a 20sec pause between the power off and power on, allowing for safe power cut)
+* watchdog (the built-in raspberry pi watchdog gets confused on brown-out)
 * following I2C registers are available (address 0x36):
 
   * REG_SIGNATURE = 0 : byte, fixed signature (for easy detection of the arduino), should be 58
@@ -21,7 +22,7 @@ This is a collection of:
   * REG_ALARM_MINUTE = 19 : alarm timer minute
   * REG_SECONDS = 21 : alarm timeout seconds (either use the alarm, either use the seconds timer)
   * REG_COMMAND = 25 : command register. updating this register initiates an action:
-
+  * REG_WATCHDOG = 26 : the watchdog counter. byte. set at 60 at boot, ticks down until it reaches 1, then triggers reboot cycle
 
 * the following commands are available:
 
