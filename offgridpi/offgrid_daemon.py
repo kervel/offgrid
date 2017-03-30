@@ -124,6 +124,9 @@ def s_on_log(client,userdata,level,buf):
     if (level == mqtt.MQTT_LOG_WARNING) or (level == mqtt.MQTT_LOG_ERR):
         print("MQTT:"+buf)
 
+def clear_interval(client,userdata,message):
+    state['startup_time'] = datetime.datetime.now()
+
 def set_sleep_regime(client,userdata,message):
     pl = str(message.payload)
     print("got new regime %s " % pl)
@@ -146,7 +149,7 @@ def tkphoto(client,userdata,message):
         photo = bytearray(cv2.imencode('.jpg', res)[1].tostring())
         print(type(photo))
         cv2.imwrite('/tmp/photo.jpg',res)
-        client.publish(state['rootkey']+'/photo',photo)
+        client.publish(state['rootkey']+'/photo',photo,retain=True)
         client.publish(state['rootkey']+'/phototaken',1)
 
 def storephoto(client,userdata,message):
@@ -246,6 +249,7 @@ subscribe_with_callback('/sleeptimer/setpoint',set_sleep_register)
 subscribe_with_callback('/sleeptimer/activate',activate_sleep)
 subscribe_with_callback('/sleeptimer/regime/setpoint',set_sleep_regime)
 subscribe_with_callback('/sleepypi/reset',reset_arduino)
+subscribe_with_callback('/sleeptimer/clearinterval',clear_interval)
 
 if args.allow_shell_commands:
     subscribe_with_callback('/shell/cmd',shell_command)
