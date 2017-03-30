@@ -88,7 +88,7 @@ class SleepyPi():
 
     def enableWatchdog(self):
         ## this also serves as watchdog ping
-        self.bus.write_byte_data(self.address,REG_WATCHDOG,120)
+        self.bus.write_byte_data(self.address,REG_WATCHDOG,60)
 
     def disableWatchdog(self):
         self.bus.write_byte_data(self.address,REG_WATCHDOG,0)

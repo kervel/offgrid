@@ -42,6 +42,8 @@ union SleepyPiRegisters {
 	unsigned char regMapTemp[REGMAP_SIZE];
 };
 
+#define WD_DEFAULT 60
+
 #define CMD_NOTHING 0
 #define CMD_WAIT_ALARM 1
 #define CMD_WAIT_TIMER 2

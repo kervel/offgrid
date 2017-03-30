@@ -44,6 +44,7 @@ void setup()
 	debugpln("start");
 #endif
 	regmap.vars.fixedChar = 58;
+	regmap.vars.watchdog_counter = WD_DEFAULT;
 	if (!SleepyPi.rtcInit(false)) {
 		Serial.println("no RTC found");
 	}
@@ -136,17 +137,21 @@ void loop()
 	if (piStatusTracker.getCurrentStatus() == eOFF ||
 			piStatusTracker.getCurrentStatus() == eUNKNOWN ||
 				piStatusTracker.getCurrentStatus() == eHALTED) {
-		regmap.vars.watchdog_counter = 0;
+		if (regmap.vars.watchdog_counter > 0) {
+			regmap.vars.watchdog_counter = WD_DEFAULT;
+		}
 	}
-	if (piStatusTracker.getCurrentStatus() == eBOOTING ||
-			piStatusTracker.getCurrentStatus() == eRUNNING) {
+	if (piStatusTracker.getCurrentStatus() == eBOOTING || piStatusTracker.getCurrentStatus() == eBOOTING_TOOLONG
+			|| piStatusTracker.getCurrentStatus() == eRUNNING) {
 		if (regmap.vars.watchdog_counter > 0) {
 			if (regmap.vars.watchdog_counter == 1) {
 				// limit reached, reboot!
+				debugpln("wd!");
 				piStatusTracker.startPowercycleHandshake();
-				regmap.vars.watchdog_counter = 0;
+				regmap.vars.watchdog_counter = WD_DEFAULT;
+			} else {
+				regmap.vars.watchdog_counter -= 1;
 			}
-			regmap.vars.watchdog_counter -= 1;
 		}
 	}
 
@@ -154,8 +159,8 @@ void loop()
 	 * end watchdog timer
 	 */
 
-	if (piStatusTracker.getCurrentStatus() == eBOOTING ||
-			piStatusTracker.getCurrentStatus() == eRUNNING) {
+	if (piStatusTracker.getCurrentStatus() == eBOOTING || piStatusTracker.getCurrentStatus() == eBOOTING_TOOLONG
+			|| piStatusTracker.getCurrentStatus() == eRUNNING) {
 		if (digitalRead(POWER_BUTTON_PIN) == LOW) {
 			piStatusTracker.startShutdownHandshake();
 		}
