@@ -17,6 +17,7 @@ REG_ALARM_HOUR = 17
 REG_ALARM_MINUTE = 19
 REG_SECONDS = 21
 REG_COMMAND = 25
+REG_WATCHDOG = 26
 
 CMD_NOTHING=0
 CMD_WAIT_ALARM=1
@@ -84,6 +85,13 @@ class SleepyPi():
 
     def sendCommand(self,cmd):
         self.bus.write_byte_data(self.address,REG_COMMAND,cmd)
+
+    def enableWatchdog(self):
+        ## this also serves as watchdog ping
+        self.bus.write_byte_data(self.address,REG_WATCHDOG,60)
+
+    def disableWatchdog(self):
+        self.bus.write_byte_data(self.address,REG_WATCHDOG,0)
 
     def sleepTimer(self,seconds):
         self.set_sleep_timer_reg(seconds)

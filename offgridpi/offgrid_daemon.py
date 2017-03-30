@@ -173,7 +173,6 @@ parser.add_argument('--minimum-run-voltage',type=float,help='if voltage drops be
 parser.add_argument('--resume-voltage', type=float, help='if voltage gets above Y, wake up from deep sleep mode (do not overwrite settings if already present in arduino)', default=11)
 parser.add_argument('--regime', type=str, help='regime eg C:600:3600 cyclic wake 10 minutes sleep 1 hour')
 parser.add_argument('--reset-on-fail',action='store_true',help='try to reset the arduino when we cannot get response, then exit')
-
 args = parser.parse_args()
 
 state['regime'] = wake_sleep_sheduler.parse_definition(args.regime)
@@ -198,10 +197,12 @@ pi = offgridpi.SimulatedPi()
 if not args.simulate:
     pi = offgridpi.SleepyPi()
 
+pi.enableWatchdog()
 
 success_c = False
 while not success_c:
     try:
+        pi.enableWatchdog()
         mqttc.on_connect = s_on_connect
         print("trying to connect to %s:%i" % (args.mqtt_host, args.mqtt_port))
         x = mqttc.connect(args.mqtt_host, args.mqtt_port)
@@ -227,6 +228,7 @@ def subscribe_with_callback(subtopic, callbackfunc):
 
 while state['connected'] == 0:
     mqttc.loop(10)
+    pi.enableWatchdog()
     print("waiting for connection ...")
     try_time = datetime.datetime.now() - first_try
     if try_time.seconds > 200:
@@ -253,6 +255,7 @@ state['startup_time'] = datetime.datetime.now()
 state['count'] = 0
 while True:
     state['count'] = state['count'] + 1
+    pi.enableWatchdog()
     regime = state['regime']
     state['rootkey'] = rootkey
     if regime.getRemainingRunTimeSeconds(state['startup_time']) == 0:
@@ -286,6 +289,7 @@ while True:
     start_loop = datetime.datetime.now()
     while now - start_loop < datetime.timedelta(seconds=30):
         x = mqttc.loop(20)
+        pi.enableWatchdog()
         if x > 0:
             raise Exception(x)
         now = datetime.datetime.now()

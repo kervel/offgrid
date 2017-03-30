@@ -44,6 +44,7 @@ void setup()
 	debugpln("start");
 #endif
 	regmap.vars.fixedChar = 58;
+	regmap.vars.watchdog_counter = WD_DEFAULT;
 	if (!SleepyPi.rtcInit(false)) {
 		Serial.println("no RTC found");
 	}
@@ -127,8 +128,40 @@ void loop()
 		blinkDebug(20);
 		isPowerSleep = true;
 	}
-	if (piStatusTracker.getCurrentStatus() == eBOOTING ||
-			piStatusTracker.getCurrentStatus() == eRUNNING) {
+
+
+	/**
+	 * watchdog timer: 0 = disabled, bigger than 0 = count down to 1. when 1 reached it reboots,
+	 * so the software needs to prevent this.
+	 */
+	if (piStatusTracker.getCurrentStatus() == eOFF ||
+			piStatusTracker.getCurrentStatus() == eUNKNOWN ||
+				piStatusTracker.getCurrentStatus() == eHALTED) {
+		if (regmap.vars.watchdog_counter > 0) {
+			regmap.vars.watchdog_counter = WD_DEFAULT;
+		}
+	}
+	if (piStatusTracker.getCurrentStatus() == eBOOTING || piStatusTracker.getCurrentStatus() == eBOOTING_TOOLONG
+			|| piStatusTracker.getCurrentStatus() == eRUNNING) {
+		if (regmap.vars.watchdog_counter > 0) {
+			if (regmap.vars.watchdog_counter == 1) {
+				// limit reached, reboot!
+				debugpln("wd!");
+				blinkDebug(3);
+				piStatusTracker.startPowercycleHandshake();
+				regmap.vars.watchdog_counter = WD_DEFAULT;
+			} else {
+				regmap.vars.watchdog_counter -= 1;
+			}
+		}
+	}
+
+	/**
+	 * end watchdog timer
+	 */
+
+	if (piStatusTracker.getCurrentStatus() == eBOOTING || piStatusTracker.getCurrentStatus() == eBOOTING_TOOLONG
+			|| piStatusTracker.getCurrentStatus() == eRUNNING) {
 		if (digitalRead(POWER_BUTTON_PIN) == LOW) {
 			piStatusTracker.startShutdownHandshake();
 		}
@@ -159,7 +192,7 @@ void loop()
 		}
 	} else {
 		// we cannot power down if we don't have a stable status because then we need millis()
-		delay(700);
+		delay(2000);
 	}
 
 	if (regmap.vars.command != CMD_NOTHING) {
