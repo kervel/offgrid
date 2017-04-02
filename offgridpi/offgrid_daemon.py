@@ -27,6 +27,13 @@ def shell_command(client,userdata,message):
     client.publish(state['rootkey'] + rtopic, output.decode())
 
 
+def get_bme280_data():
+    from bme280 import bme280,bme280_i2c
+    bme280_i2c.set_default_i2c_address(0x77)
+    bme280_i2c.set_default_bus(1)
+    bme280.setup()
+    return bme280.read_all()
+
 
 
 def disk_usage(path):
@@ -176,6 +183,7 @@ parser.add_argument('--minimum-run-voltage',type=float,help='if voltage drops be
 parser.add_argument('--resume-voltage', type=float, help='if voltage gets above Y, wake up from deep sleep mode (do not overwrite settings if already present in arduino)', default=11)
 parser.add_argument('--regime', type=str, help='regime eg C:600:3600 cyclic wake 10 minutes sleep 1 hour')
 parser.add_argument('--reset-on-fail',action='store_true',help='try to reset the arduino when we cannot get response, then exit')
+parser.add_argument('--enable-bme280',action='store_true',help='enable bme280 temp sensor')
 args = parser.parse_args()
 
 state['regime'] = wake_sleep_sheduler.parse_definition(args.regime)
@@ -278,6 +286,13 @@ while True:
 
     now = datetime.datetime.now()
     new_c = build_ifaces_topics()
+    if args.enable_bme280:
+        data = get_bme280_data()
+        #Data(humidity=45.865426360003156, pressure=1024.191697829865, temperature=21.77665821025148)
+        new_c['/bme280/humidity'] = data.humidity
+        new_c['/bme280/pressure'] = data.pressure
+        new_c['/bme280/temperature'] = data.temperature
+
     new_c['/online'] = 1
     new_c['/current'] = pi.get_rpi_current()
     new_c['/diskusage'] = disk_usage('/')
