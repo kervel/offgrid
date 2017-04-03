@@ -9,6 +9,7 @@ import offgridpi
 import argparse
 import datetime
 import os
+import sys
 from offgridpi import wake_sleep_sheduler
 from collections import namedtuple
 from subprocess import Popen, PIPE, STDOUT
@@ -28,11 +29,16 @@ def shell_command(client,userdata,message):
 
 
 def get_bme280_data():
-    from bme280 import bme280,bme280_i2c
-    bme280_i2c.set_default_i2c_address(0x77)
-    bme280_i2c.set_default_bus(1)
-    bme280.setup()
-    return bme280.read_all()
+    try:
+        from bme280 import bme280,bme280_i2c
+        bme280_i2c.set_default_i2c_address(0x77)
+        bme280_i2c.set_default_bus(1)
+        bme280.setup()
+        return bme280.read_all()
+    except:
+        state['client'].publish(state['rootkey'] + '/bme280/error', sys.exc_info()[0])
+        return None
+
 
 
 
@@ -235,7 +241,7 @@ def subscribe_with_callback(subtopic, callbackfunc):
 
 
 
-
+state['client']=mqttc
 
 while state['connected'] == 0:
     mqttc.loop(10)
@@ -288,10 +294,10 @@ while True:
     new_c = build_ifaces_topics()
     if args.enable_bme280:
         data = get_bme280_data()
-        #Data(humidity=45.865426360003156, pressure=1024.191697829865, temperature=21.77665821025148)
-        new_c['/bme280/humidity'] = data.humidity
-        new_c['/bme280/pressure'] = data.pressure
-        new_c['/bme280/temperature'] = data.temperature
+        if not (data is None):
+            new_c['/bme280/humidity'] = data.humidity
+            new_c['/bme280/pressure'] = data.pressure
+            new_c['/bme280/temperature'] = data.temperature
 
     new_c['/online'] = 1
     new_c['/current'] = pi.get_rpi_current()
