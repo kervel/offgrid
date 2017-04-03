@@ -36,7 +36,7 @@ def get_bme280_data():
         bme280.setup()
         return bme280.read_all()
     except:
-        state['client'].publish(state['rootkey'] + '/bme280/error', sys.exc_info()[0])
+        state['client'].publish(state['rootkey'] + '/bme280/error', str(sys.exc_info()[0]))
         return None
 
 
