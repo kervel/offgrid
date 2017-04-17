@@ -28,6 +28,8 @@ bash /home/kervel/offgrid/offgridpi/run_daemon_bg.sh
 
 python /home/pi/bin/SleepyPi/shutdowncheck.py &
 
+((sleep 60;  python /home/kervel/offgrid/offgridpi/conditional_pic.py )&)
+
 autossh -N -f -i /home/kervel/.ssh/id_rsa -R 22222:localhost:22 kervel@hs3.kapernikov.com
 
 exit 0
