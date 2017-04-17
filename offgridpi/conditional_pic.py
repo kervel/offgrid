@@ -12,7 +12,7 @@ def get_age(filename):
         return datetime.datetime.fromtimestamp(os.path.getctime(filename))
 
 def most_recent_time(dir):
-    fs = os.listdir(dir)
+    fs = [os.path.join(dir,x) for x in os.listdir(dir)]
     ages = [get_age(x) for x in fs]
     if len(ages) == 0:
         return datetime.datetime(year=1900,month=1,day=1)
