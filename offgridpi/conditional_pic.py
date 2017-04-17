@@ -33,6 +33,7 @@ def make_photo():
     now = datetime.datetime.now()
     fname = 'still-' + now.strftime('%y%m%d-%H%M%S') + '.jpg'
     os.system('raspistill -o /home/pi/photos/%s' % fname)
+    os.system("sync")
 
 if (should_make_photo()):
     make_photo()
