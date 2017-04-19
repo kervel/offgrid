@@ -174,7 +174,7 @@ def tkphoto(client,userdata,message):
     s, img = cam.read()
     if s:
         #gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
-        res = cv2.resize(img,dsize=(800,600))
+        res = cv2.resize(img,dsize=(640,480))
         photo = bytearray(cv2.imencode('.jpg', res)[1].tostring())
         print(type(photo))
         cv2.imwrite('/tmp/photo.jpg',res)
