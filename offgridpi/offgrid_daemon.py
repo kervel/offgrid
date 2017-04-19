@@ -147,6 +147,22 @@ def set_sleep_regime(client,userdata,message):
     print(state['regime'])
     print("updated sleep regime to " + str(state['regime']))
 
+def take_photo_auto(client):
+    print("taking photo!")
+    cam = VideoCapture(0)
+    s, img = cam.read()
+    for x in range(7):
+        sleep(0.1)
+        s, img = cam.read()
+    sleep(0.1)
+    s, img = cam.read()
+    if s:
+        res = cv2.resize(img,dsize=(640,480))
+        photo = bytearray(cv2.imencode('.jpg', res)[1].tostring())
+        client.publish(state['rootkey']+'/auto_photo',photo,retain=True)
+        client.publish(state['rootkey']+'/auto_phototaken',1)
+
+
 def tkphoto(client,userdata,message):
     print("taking photo!")
     cam = VideoCapture(0)
@@ -158,7 +174,7 @@ def tkphoto(client,userdata,message):
     s, img = cam.read()
     if s:
         #gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
-        res = cv2.resize(img,dsize=(640,480))
+        res = cv2.resize(img,dsize=(800,600))
         photo = bytearray(cv2.imencode('.jpg', res)[1].tostring())
         print(type(photo))
         cv2.imwrite('/tmp/photo.jpg',res)
@@ -335,5 +351,8 @@ while True:
     if state['count'] < 2:
         # ntpdate might be running
         state['startup_time'] = datetime.datetime.now()
+    if state['count'] == 4:
+        take_photo_auto(mqttc)
+
 
 
