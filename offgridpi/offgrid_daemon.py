@@ -271,6 +271,8 @@ if args.allow_shell_commands:
 
 state['startup_time'] = datetime.datetime.now()
 state['count'] = 0
+nb_errors = 0
+
 while True:
     state['count'] = state['count'] + 1
     pi.enableWatchdog()
@@ -316,7 +318,18 @@ while True:
         x = mqttc.loop(20)
         pi.enableWatchdog()
         if x > 0:
-            raise Exception(x)
+            nb_errors += 1
+            print("got error: " + str(x))
+            time.sleep(0.5)
+            if (nb_errors > 2):
+                print("reconnecting ...")
+                mqttc.reconnect()
+                mqttc.loop(1)
+                mqttc.loop(1)
+            if (nb_errors > 4):
+                raise Exception(x)
+        else:
+            nb_errors = 0
         now = datetime.datetime.now()
     reset_on_problems()
     if state['count'] < 2:
