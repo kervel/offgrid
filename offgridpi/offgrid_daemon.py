@@ -351,7 +351,7 @@ while True:
     if state['count'] < 2:
         # ntpdate might be running
         state['startup_time'] = datetime.datetime.now()
-    if state['count'] == 2:
+    if (state['count'] == 2) or (state['count'] % 15 == 0):
         take_photo_auto(mqttc)
 
 
