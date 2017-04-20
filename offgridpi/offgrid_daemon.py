@@ -187,7 +187,7 @@ def storephoto(client,userdata,message):
     now = datetime.datetime.now()
     fname = 'still-' + now.strftime('%y%m%d-%H%M%S') + '.jpg'
     os.system('raspistill -o /home/pi/photos/%s' % fname)
-    os.system('mogrify -strip -interlace Plane -gaussian-blur 0.05 -quality 75% /home/pi/photos/%s' % fname)
+    os.system('mogrify -strip -interlace Plane -gaussian-blur 0.05 -quality 75% /home/pi/photos/' + fname)
     os.system("sync")
     client.publish(state['rootkey']+'/photostored',1)
 
