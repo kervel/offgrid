@@ -34,6 +34,8 @@ def make_photo():
     fname = 'still-' + now.strftime('%y%m%d-%H%M%S') + '.jpg'
     os.system('raspistill -o /home/pi/photos/%s' % fname)
     os.system("sync")
+    os.system('mogrify -strip -interlace Plane -gaussian-blur 0.05 -quality 75% /home/pi/photos/%s' % fname)
+    os.system("sync")
 
 if (should_make_photo()):
     make_photo()
