@@ -251,6 +251,16 @@ while not success_c:
 
 print(x)
 
+def flush_client():
+    client = state['client']
+    max_count = 200
+    count = 0
+    while client.want_write():
+        count += 1
+        client.loop(0.5)
+        if (count >= max_count):
+            return
+    return
 
 
 def subscribe_with_callback(subtopic, callbackfunc):
@@ -302,6 +312,7 @@ while True:
             waketime = datetime.datetime.now() + datetime.timedelta(seconds=sleeptime)
             waketimestr = waketime.strftime('%d/%m/%y %H:%M')
             mqttc.publish(rootkey + '/seeyouat', waketimestr, retain=True)
+            flush_client()
             pi.sleepTimer(sleeptime)
             if (args.simulate):
                 # reset regime
