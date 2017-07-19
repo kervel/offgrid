@@ -44,6 +44,14 @@ class SleepyPi():
         val = bytearray([b1,b2,b3,b4])
         return struct.unpack('<f',val)[0]
 
+    def i2c_get_uintle(self,register):
+        b1 = self.bus.read_byte_data(self.address,register)
+        b2 = self.bus.read_byte_data(self.address,register+1)
+        b3 = self.bus.read_byte_data(self.address,register+2)
+        b4 = self.bus.read_byte_data(self.address,register+3)
+        val = bytearray([b1,b2,b3,b4])
+        return struct.unpack('<I',val)[0]
+
     def get_supply_voltage(self):
         return self.i2c_get_float32le(REG_VOLTAGE)
 
@@ -83,6 +91,9 @@ class SleepyPi():
         bytearray = struct.pack('<I',seconds)
         self.bus.write_i2c_block_data(self.address,REG_SECONDS, clist(bytearray))
 
+    def get_sleep_timer_reg(self):
+        return self.i2c_get_uintle(self, REG_SECONDS)
+
     def sendCommand(self,cmd):
         self.bus.write_byte_data(self.address,REG_COMMAND,cmd)
 
@@ -98,7 +109,10 @@ class SleepyPi():
 
     def sleepTimer(self,seconds):
         self.set_sleep_timer_reg(seconds)
-        self.sendCommand(CMD_WAIT_TIMER)
+        if (self.get_sleep_timer_reg() == seconds):
+            self.sendCommand(CMD_WAIT_TIMER)
+        else:
+            raise Exception("failed write to sleep register")
 
     def sleepAlarm(self,hour,minute):
         self.set_alarm_hour_reg(hour)
