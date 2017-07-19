@@ -258,7 +258,8 @@ void execute_command() {
 		piStatusTracker.startShutdownHandshake();
 		break;
 	case CMD_WAIT_TIMER:
-		piStatusTracker.onPowerOff(wait_timer);
+		//piStatusTracker.onPowerOff(wait_timer);
+		piStatusTracker.onPowerOff(wait_timer_nortc);
 		piStatusTracker.startShutdownHandshake();
 		break;
 	case CMD_POWEROFF_EXT :
@@ -280,11 +281,33 @@ void wait_timershort() {
 	wait_timer(20);
 }
 
+void wait_timer_nortc() {
+	long wks = regmap.vars.wakeupSeconds;
+	blinkDebug(3);
+	debugpln("waiting for timer...");
+    if (wks > 40000) {
+    	/* max sleep time */
+    	wks = 40000;
+    }
+	for (long i = 0; i < wks; i+=8) {
+		SleepyPi.powerDown(SLEEP_8S, ADC_OFF, BOD_OFF);
+		/*if (i % 64 == 0) {
+
+		}*/
+	}
+    blinkDebug(7);
+    SleepyPi.enablePiPower(true);
+}
+
 void wait_timer(long wks) {
 	blinkDebug(3);
 	debugpln("waiting for timer...");
     attachInterrupt(0, alarm_isr, FALLING);    // Alarm pin
     eTIMER_TIMEBASE tb = eTB_SECOND;
+    if (wks > 40000) {
+    	/* max sleep time */
+    	wks = 40000;
+    }
     uint8_t tv = 0;
     if (wks < 250) {
     	tb = eTB_SECOND;

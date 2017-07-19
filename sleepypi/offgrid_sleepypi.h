@@ -30,7 +30,7 @@ struct SleepyPiRegisterMap {
 	float inputVoltageResume;
 	int wakeupAlarmHour;
 	int wakeupAlarmMinute;
-	long wakeupSeconds;
+	unsigned long wakeupSeconds;
 	unsigned char command;
 	unsigned char watchdog_counter;
 };
