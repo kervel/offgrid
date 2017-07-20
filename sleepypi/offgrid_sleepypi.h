@@ -20,6 +20,7 @@ void wait_alarm();
 void wait_timer();
 void wait_timer(long secs);
 void wait_timershort();
+void wait_timer_nortc();
 void execute_command();
 
 struct SleepyPiRegisterMap {
